@@ -30,6 +30,9 @@ let package = Package(
                 "KeySender",
             ]
         ),
+        .target(name: "SelectedTextKitExample",
+            dependencies: ["SelectedTextKit"],
+            path: "SelectedTextKitExample"),
         .testTarget(
             name: "SelectedTextKitTests",
             dependencies: ["SelectedTextKit"]

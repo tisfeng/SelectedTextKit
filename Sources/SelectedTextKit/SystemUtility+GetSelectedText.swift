@@ -14,8 +14,7 @@ extension SystemUtility {
 
     /// 1. Get selected text, try to get text by AXUI first.
     /// 2. If failed, try to get text by menu action copy.
-    /// 3. if failed, try to get text by shortcut copy.
-    static func getSelectedText() -> String? {
+    public static func getSelectedText() -> String? {
         logInfo("Attempting to get selected text")
 
         // Try AXUI method first
@@ -33,14 +32,6 @@ extension SystemUtility {
             }
 
             logError("Failed to get text via menu action copy")
-
-            // If menu action copy fails, try shortcut copy
-            if let shortcutCopyText = getSelectedTextByShortcutCopy() {
-                logInfo("Successfully got text via shortcut copy")
-                return shortcutCopyText
-            }
-
-            logError("Failed to get text via shortcut copy")
         }
 
         logError("All methods to get selected text have failed")
