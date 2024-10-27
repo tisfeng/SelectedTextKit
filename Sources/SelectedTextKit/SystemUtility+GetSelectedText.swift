@@ -26,7 +26,7 @@ extension SystemUtility {
             logError("Failed to get text via AXUI: \(error)")
 
             // If AXUI fails, try menu action copy
-            if let menuCopyText = getSelectedTextByMenuBarActionCopy() {
+            if let menuCopyText = try? getSelectedTextByMenuBarActionCopy() {
                 logInfo("Successfully got text via menu action copy")
                 return menuCopyText
             }
@@ -39,7 +39,7 @@ extension SystemUtility {
     }
 
     /// Get selected text by AXUI
-    static func getSelectedTextByAXUI() -> Result<String, AXError> {
+    public static func getSelectedTextByAXUI() -> Result<String, AXError> {
         logInfo("Getting selected text via AXUI")
 
         let systemWideElement = AXUIElementCreateSystemWide()
@@ -85,7 +85,7 @@ extension SystemUtility {
     /// Get selected text by menu bar action copy.
     ///
     /// Refer to Copi  https://github.com/s1ntoneli/Copi/blob/531a12fdc2da66c809951926ce88af02593e0723/Copi/Utilities/SystemUtilities.swift#L257
-    static func getSelectedTextByMenuBarActionCopy() -> String? {
+    public static func getSelectedTextByMenuBarActionCopy() throws -> String? {
         logInfo("Getting selected text by menu bar action copy")
 
         guard let copyItem = findEnabledCopyItemInFrontmostApp() else {
@@ -102,7 +102,7 @@ extension SystemUtility {
     }
 
     /// Get selected text by shortcut copy.
-    static func getSelectedTextByShortcutCopy() -> String? {
+    public static func getSelectedTextByShortcutCopy() -> String? {
         logInfo("Getting selected text by shortcut copy")
 
         let selectedText = getSelectedTextWithAction {

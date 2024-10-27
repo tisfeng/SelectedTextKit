@@ -60,7 +60,10 @@ func measureTime(block: () -> Void) {
 }
 
 extension String {
+    /// Copy to clipboard
     func copyToClipboard() {
-        NSPasteboard.general.setString(self, forType: .string)
+        let pasteboard = NSPasteboard.general
+        pasteboard.clearContents()
+        pasteboard.setString(self, forType: .string)
     }
 }

@@ -21,7 +21,7 @@ func logError(_ message: String) {
 }
 
 func findEnabledCopyItemInFrontmostApp() -> UIElement? {
-    guard checkIsProcessTrusted() else {
+    guard checkIsProcessTrusted(prompt: true) else {
         logError("Process is not trusted for accessibility")
         return nil
     }
