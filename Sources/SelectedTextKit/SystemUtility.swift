@@ -17,27 +17,38 @@ import AppKit
 @objcMembers
 public class SystemUtility: NSObject {
     /// Copy text and paste text safely.
-    static func copyTextAndPasteSafely(_ text: String) {
+    static func copyTextAndPasteSafely(_ text: String) async {
         logInfo("Copy text and paste text safely")
 
-        monitorPasteboardContentChange(
-            triggerAction: {
-                text.copyToClipboard()
-            },
-            onPasteboardChange: { text in
-                if let pastedText = text {
-                    postPasteEvent()
-                    logInfo("Pasted text: \(pastedText)")
-                } else {
-                    logError("Failed to paste text")
-                }
-            }
-        )
+       let text =  await monitorPasteboardContentChange {
+            text.copyToClipboard()
+        }
+
+        if let text = text {
+            postPasteEvent()
+            logInfo("Pasted text: \(text)")
+        } else {
+            logError("Failed to paste text")
+        }
+
+//        monitorPasteboardContentChange(
+//            triggerAction: {
+//                text.copyToClipboard()
+//            },
+//            onPasteboardChange: { text in
+//                if let pastedText = text {
+//                    postPasteEvent()
+//                    logInfo("Pasted text: \(pastedText)")
+//                } else {
+//                    logError("Failed to paste text")
+//                }
+//            }
+//        )
     }
 }
 
 /// Post copy event: Cmd+C
-func postCopyEvent() {
+public func postCopyEvent() {
     let sender = KeySender(key: .c, modifiers: .command)
     sender.sendGlobally()
 }

@@ -14,32 +14,32 @@ extension SystemUtility {
 
     /// 1. Get selected text, try to get text by AXUI first.
     /// 2. If failed, try to get text by menu action copy.
-    public static func getSelectedText() -> String? {
+    public static func getSelectedText() async throws -> String? {
         logInfo("Attempting to get selected text")
 
         // Try AXUI method first
-        switch getSelectedTextByAXUI() {
+        let axResult = await getSelectedTextByAXUI()
+        switch axResult {
         case let .success(text):
             logInfo("Successfully got text via AXUI")
             return text
+
         case let .failure(error):
             logError("Failed to get text via AXUI: \(error)")
 
             // If AXUI fails, try menu action copy
-            if let menuCopyText = try? getSelectedTextByMenuBarActionCopy() {
+            if let menuCopyText = try await getSelectedTextByMenuBarActionCopy() {
                 logInfo("Successfully got text via menu action copy")
                 return menuCopyText
             }
 
-            logError("Failed to get text via menu action copy")
+            logError("All methods to get selected text have failed")
+            return nil
         }
-
-        logError("All methods to get selected text have failed")
-        return nil
     }
 
     /// Get selected text by AXUI
-    public static func getSelectedTextByAXUI() -> Result<String, AXError> {
+    public static func getSelectedTextByAXUI() async -> Result<String, AXError> {
         logInfo("Getting selected text via AXUI")
 
         let systemWideElement = AXUIElementCreateSystemWide()
@@ -53,7 +53,7 @@ extension SystemUtility {
         )
 
         guard focusedElementResult == .success,
-              let focusedElement = focusedElementRef as! AXUIElement?
+            let focusedElement = focusedElementRef as! AXUIElement?
         else {
             logError("Failed to get focused element")
             return .failure(focusedElementResult)
@@ -82,87 +82,74 @@ extension SystemUtility {
         return .success(selectedText)
     }
 
-    /// Get selected text by menu bar action copy.
-    ///
-    /// Refer to Copi  https://github.com/s1ntoneli/Copi/blob/531a12fdc2da66c809951926ce88af02593e0723/Copi/Utilities/SystemUtilities.swift#L257
-    public static func getSelectedTextByMenuBarActionCopy() throws -> String? {
+    /// Get selected text by menu bar action copy
+    @MainActor
+    public static func getSelectedTextByMenuBarActionCopy() async throws -> String? {
         logInfo("Getting selected text by menu bar action copy")
 
         guard let copyItem = findEnabledCopyItemInFrontmostApp() else {
             return nil
         }
 
-        let selectedText = getSelectedTextWithAction {
+        return await getSelectedTextWithAction {
             try copyItem.performAction(.press)
         }
-
-        logInfo("Menu bar action copy got selected text: \(selectedText ?? "nil")")
-
-        return selectedText
     }
 
-    /// Get selected text by shortcut copy.
-    public static func getSelectedTextByShortcutCopy() -> String? {
+    /// Get selected text by shortcut copy
+    public static func getSelectedTextByShortcutCopy() async -> String? {
         logInfo("Getting selected text by shortcut copy")
 
-        let selectedText = getSelectedTextWithAction {
-            postCopyEvent()
+        guard checkIsProcessTrusted(prompt: true) else {
+            logError("Process is not trusted for accessibility")
+            return nil
         }
 
-        logInfo("Shortcut copy got selected text: \(selectedText ?? "nil")")
-
-        return selectedText
+        return await getSelectedTextWithAction {
+            postCopyEvent()
+        }
     }
 
+    @MainActor
     static func getSelectedTextWithAction(
-        action: @escaping () throws -> ()
-    )
-        -> String? {
-        var selectedText: String?
-        monitorPasteboardContentChange(
-            triggerAction: {
-                try action()
-            },
-            onPasteboardChange: { copiedText in
-                selectedText = copiedText
-            }
-        )
-        return selectedText
+        action: @escaping () throws -> Void
+    ) async -> String? {
+        return await monitorPasteboardContentChange(triggerAction: action)
     }
 
     /// Monitor pasteboard content change.
-    ///
     /// - Parameters:
     ///   - triggerAction: The action to trigger the pasteboard change.
-    ///   - onPasteboardChange: The callback when the pasteboard content changes.
+    /// - Returns: The new pasteboard content string if changed, nil if failed or timeout
+    @MainActor
     static func monitorPasteboardContentChange(
-        triggerAction: @escaping () throws -> (),
-        onPasteboardChange: @escaping (String?) -> ()
-    ) {
+        triggerAction: @escaping () throws -> Void
+    ) async -> String? {
         logInfo("Monitoring pasteboard content change")
 
         let pasteboard = NSPasteboard.general
         let initialChangeCount = pasteboard.changeCount
+        var newContent: String?
 
-        pasteboard.performTemporaryTask {
+        await pasteboard.performTemporaryTask {
             do {
                 logInfo("Executing trigger action")
                 try triggerAction()
             } catch {
                 logError("Failed to execute trigger action: \(error)")
-                onPasteboardChange(nil)
                 return
             }
 
-            pollTask {
+            await pollTask {
                 if pasteboard.changeCount != initialChangeCount {
-                    let result = pasteboard.string()
-                    logInfo("Pasteboard changed content: \(result ?? "nil")")
-                    onPasteboardChange(result)
+                    newContent = pasteboard.string()
+                    logInfo("Pasteboard changed content: \(newContent ?? "nil")")
                     return true
                 }
                 return false
             }
         }
+
+        return newContent
     }
 }

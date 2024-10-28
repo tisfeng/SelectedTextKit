@@ -11,30 +11,20 @@ import Foundation
 
 // MARK: - SharedUtilities
 
-/// Shared utilities for objc and swift.
-@objc
-public class SharedUtilities: NSObject {
-    static func isAccessibilityEnabled() -> Bool {
-        checkIsProcessTrusted()
-    }
-}
 
-/// Sync poll task, if task is true, return true, else continue polling.
-///
-/// - Warning: ⚠️ This method will block the current thread, only use when necessary.
-func pollTask(
+/// Poll task, if task is true, return true, else continue polling.
+public func pollTask(
     _ task: @escaping () -> Bool,
     every interval: TimeInterval = 0.005,
-    timeout: TimeInterval = 0.1,
-    timeoutCallback: @escaping () -> () = {}
-) {
+    timeout: TimeInterval = 0.1
+) async -> Bool {
     let startTime = Date()
     while Date().timeIntervalSince(startTime) < timeout {
         if task() {
-            return
+            return true
         }
-        Thread.sleep(forTimeInterval: interval)
+        try? await Task.sleep(nanoseconds: UInt64(interval * 1_000_000_000))
     }
-    timeoutCallback()
-    logInfo("pollTask timeout call back")
+    logInfo("pollTask timeout")
+    return false
 }
