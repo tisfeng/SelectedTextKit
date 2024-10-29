@@ -50,7 +50,7 @@ public func getSelectedTextByAXUI() async -> Result<String, AXError> {
     )
 
     guard focusedElementResult == .success,
-        let focusedElement = focusedElementRef as! AXUIElement?
+          let focusedElement = focusedElementRef as! AXUIElement?
     else {
         logError("Failed to get focused element")
         return .failure(focusedElementResult)
@@ -150,7 +150,7 @@ func getNextPasteboardContent(
     }
 
     if preservePasteboard {
-        await pasteboard.performTemporaryTask(task: executeAction)
+        await pasteboard.performTemporaryTask(executeAction)
     } else {
         await executeAction()
     }
