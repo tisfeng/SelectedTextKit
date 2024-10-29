@@ -6,10 +6,10 @@
 //  Copyright © 2024 izual. All rights reserved.
 //
 
-import Foundation
-import os.log
-import KeySender
 import AppKit
+import Foundation
+import KeySender
+import os.log
 
 let logger = Logger(subsystem: "com.izual.SelectedTextKit", category: "main")
 
@@ -39,13 +39,13 @@ public func pollTask(
     return false
 }
 
-/// Copy text and paste text safely.
-public func copyTextAndPasteSafely(_ text: String) async {
+/// Copy text and paste text.
+public func copyTextAndPaste(_ text: String) async {
     logInfo("Copy text and paste text safely")
 
-    let newContent = await getNextPasteboardContent {
+    let newContent = await getNextPasteboardContent(triggeredBy: {
         text.copyToClipboard()
-    }
+    }, preservePasteboard: false)
 
     if let text = newContent {
         postPasteEvent()

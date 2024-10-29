@@ -114,13 +114,15 @@ func getSelectedTextWithAction(
     return await getNextPasteboardContent(triggeredBy: action)
 }
 
-/// Monitor pasteboard content change.
+/// Get the next pasteboard content after executing an action.
 /// - Parameters:
-///   - triggerAction: The action to trigger the pasteboard change.
-/// - Returns: The new pasteboard content string if changed, nil if failed or timeout
+///   - action: The action that triggers the pasteboard change
+///   - preservePasteboard: Whether to preserve the original pasteboard content
+/// - Returns: The new pasteboard content if changed, nil if failed or timeout
 @MainActor
 func getNextPasteboardContent(
-    triggeredBy action: @escaping () throws -> Void
+    triggeredBy action: @escaping () throws -> Void,
+    preservePasteboard: Bool = true
 ) async -> String? {
     logInfo("Getting next pasteboard content")
 
@@ -128,7 +130,7 @@ func getNextPasteboardContent(
     let initialChangeCount = pasteboard.changeCount
     var newContent: String?
 
-    await pasteboard.performTemporaryTask {
+    let executeAction = { @MainActor in
         do {
             logInfo("Executing trigger action")
             try action()
@@ -145,6 +147,12 @@ func getNextPasteboardContent(
             }
             return false
         }
+    }
+
+    if preservePasteboard {
+        await pasteboard.performTemporaryTask(task: executeAction)
+    } else {
+        await executeAction()
     }
 
     return newContent
