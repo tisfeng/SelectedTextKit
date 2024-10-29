@@ -40,7 +40,7 @@ public func pollTask(
 }
 
 /// Copy text and paste text safely.
-func copyTextAndPasteSafely(_ text: String) async {
+public func copyTextAndPasteSafely(_ text: String) async {
     logInfo("Copy text and paste text safely")
 
     let newContent = await getNextPasteboardContent {
@@ -56,7 +56,7 @@ func copyTextAndPasteSafely(_ text: String) async {
 }
 
 /// Post copy event: Cmd+C
-public func postCopyEvent() {
+func postCopyEvent() {
     let sender = KeySender(key: .c, modifiers: .command)
     sender.sendGlobally()
 }
