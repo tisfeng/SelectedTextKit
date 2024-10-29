@@ -50,7 +50,7 @@ public func getSelectedTextByAXUI() async -> Result<String, AXError> {
     )
 
     guard focusedElementResult == .success,
-          let focusedElement = focusedElementRef as! AXUIElement?
+        let focusedElement = focusedElementRef as! AXUIElement?
     else {
         logError("Failed to get focused element")
         return .failure(focusedElementResult)
@@ -122,8 +122,8 @@ func getSelectedTextWithAction(
 func getNextPasteboardContent(
     triggeredBy action: @escaping () throws -> Void
 ) async -> String? {
-    logInfo("Monitoring pasteboard content change")
-    
+    logInfo("Getting next pasteboard content")
+
     let pasteboard = NSPasteboard.general
     let initialChangeCount = pasteboard.changeCount
     var newContent: String?
@@ -140,7 +140,7 @@ func getNextPasteboardContent(
         await pollTask {
             if pasteboard.changeCount != initialChangeCount {
                 newContent = pasteboard.string()
-                logInfo("Pasteboard changed content: \(newContent ?? "nil")")
+                logInfo("New Pasteboard content: \(newContent ?? "nil")")
                 return true
             }
             return false
