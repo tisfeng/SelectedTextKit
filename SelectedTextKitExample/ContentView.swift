@@ -26,7 +26,7 @@ struct ContentView: View {
 
             Button("Get selected text") {
                 Task {
-                    selectedText = try await SystemUtility.getSelectedTextByMenuBarActionCopy() ?? ""
+                    selectedText = try await getSelectedTextByMenuBarActionCopy() ?? ""
                 }
             }
             

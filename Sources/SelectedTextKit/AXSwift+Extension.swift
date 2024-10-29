@@ -1,6 +1,6 @@
 //
 //  AXSwift+Extension.swift
-//  Easydict
+//  SelectedTextKit
 //
 //  Created by tisfeng on 2024/10/8.
 //  Copyright © 2024 izual. All rights reserved.
@@ -9,16 +9,7 @@
 import AXSwift
 import AXSwiftExt
 import Foundation
-import OSLog
 import AppKit
-
-func logInfo(_ message: String) {
-    os_log(.info, log: .default, "%@", message)
-}
-
-func logError(_ message: String) {
-    os_log(.error, log: .default, "%@", message)
-}
 
 func findEnabledCopyItemInFrontmostApp() -> UIElement? {
     guard checkIsProcessTrusted(prompt: true) else {

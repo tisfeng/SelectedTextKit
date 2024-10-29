@@ -1,6 +1,6 @@
 //
 //  NSPasteboard+Extension.swift
-//  Easydict
+//  SelectedTextKit
 //
 //  Created by tisfeng on 2024/10/3.
 //  Copyright © 2024 izual. All rights reserved.
@@ -30,7 +30,6 @@ extension NSPasteboard {
 }
 
 extension NSPasteboard {
-    @objc
     func saveCurrentContents() {
         var archivedItems = [NSPasteboardItem]()
         if let allItems = pasteboardItems {
@@ -50,7 +49,6 @@ extension NSPasteboard {
         }
     }
 
-    @objc
     func restoreOriginalContents() {
         if let items = savedItems {
             clearContents()
