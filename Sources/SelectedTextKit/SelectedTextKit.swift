@@ -22,7 +22,7 @@ public func getSelectedText() async throws -> String? {
         return text
 
     case let .failure(error):
-        logError("Failed to get text via AXUI: \(error)")
+        logError("Failed to get text via AXUI")
 
         // If AXUI fails, try menu action copy
         if let menuCopyText = try await getSelectedTextByMenuBarActionCopy() {
@@ -50,9 +50,9 @@ public func getSelectedTextByAXUI() async -> Result<String, AXError> {
     )
 
     guard focusedElementResult == .success,
-          let focusedElement = focusedElementRef as! AXUIElement?
+        let focusedElement = focusedElementRef as! AXUIElement?
     else {
-        logError("Failed to get focused element")
+        logError("Failed to get focused element, error: \(focusedElementResult)")
         return .failure(focusedElementResult)
     }
 
@@ -66,12 +66,12 @@ public func getSelectedTextByAXUI() async -> Result<String, AXError> {
     )
 
     guard selectedTextResult == .success else {
-        logError("Failed to get selected text")
+        logError("Failed to get selected text, error: \(selectedTextResult)")
         return .failure(selectedTextResult)
     }
 
     guard let selectedText = selectedTextValue as? String else {
-        logError("Selected text is not a string")
+        logError("Selected text is not a string, error: \(selectedTextResult)")
         return .failure(.noValue)
     }
 
