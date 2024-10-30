@@ -74,6 +74,11 @@ extension NSPasteboard {
     }
 
     func string() -> String? {
-        string(forType: .string)
+        // Check if there is text type data
+        guard let types = types, types.contains(.string) else {
+            logInfo("No string type data found: \(types)")
+            return nil
+        }
+        return string(forType: .string)
     }
 }

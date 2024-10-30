@@ -24,16 +24,16 @@ func logError(_ message: String) {
 /// Poll task, if task is true, return true, else continue polling.
 @discardableResult
 public func pollTask(
-    _ task: @escaping () -> Bool,
+    _ task: @escaping () async -> Bool,
     every interval: TimeInterval = 0.005,
     timeout: TimeInterval = 0.1
 ) async -> Bool {
     let startTime = Date()
     while Date().timeIntervalSince(startTime) < timeout {
-        if task() {
+        if await task() {
             return true
         }
-        try? await Task.sleep(nanoseconds: UInt64(interval * 1_000_000_000))
+        try await wait(for: interval)
     }
     logInfo("pollTask timeout")
     return false
@@ -84,4 +84,9 @@ func measureTime(block: () -> Void) {
     let milliseconds = Double(nanoseconds) / 1_000_000
 
     print("Execution time: \(milliseconds) ms")
+}
+
+/// Wait for seconds.
+func wait(for seconds: TimeInterval) async {
+    try? await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000))
 }
