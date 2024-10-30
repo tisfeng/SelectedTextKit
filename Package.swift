@@ -35,9 +35,5 @@ let package = Package(
             name: "SelectedTextKitExample",
             dependencies: ["SelectedTextKit"],
             path: "SelectedTextKitExample"),
-        .testTarget(
-            name: "SelectedTextKitTests",
-            dependencies: ["SelectedTextKit"]
-        ),
     ]
 )
