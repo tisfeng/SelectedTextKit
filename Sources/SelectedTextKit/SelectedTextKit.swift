@@ -143,7 +143,7 @@ func getNextPasteboardContent(
         await pollTask {
             // Check if the pasteboard content has changed
             if pasteboard.changeCount != initialChangeCount {
-                await wait(for: 0.01)
+                // !!!: The pasteboard content may be nil or other strange content(such as old content) if the pasteboard is changing by other applications in the same time, like PopClip.
                 newContent = pasteboard.string()
                 if let newContent {
                     logInfo("New Pasteboard content: \(newContent)")
