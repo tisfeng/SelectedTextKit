@@ -143,6 +143,7 @@ func getNextPasteboardContent(
         await pollTask {
             // Check if the pasteboard content has changed
             if pasteboard.changeCount != initialChangeCount {
+                await wait(for: 0.01)
                 newContent = pasteboard.string()
                 if let newContent {
                     logInfo("New Pasteboard content: \(newContent)")
