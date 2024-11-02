@@ -19,3 +19,7 @@ let text = try await getSelectedText()
 // Get selected text by menu bar action copy
 let text = try await getSelectedTextByMenuBarActionCopy()
 ```
+
+### Thanks
+
+Get selected text by menu bar action copy is inspired by [Copi](https://github.com/s1ntoneli/Copi/blob/531a12fdc2da66c809951926ce88af02593e0723/Copi/Utilities/SystemUtilities.swift#L257), thanks for [s1ntoneli](https://github.com/s1ntoneli)'s work.
