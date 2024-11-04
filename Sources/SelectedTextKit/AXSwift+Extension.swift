@@ -8,8 +8,8 @@
 
 import AXSwift
 import AXSwiftExt
-import Foundation
 import AppKit
+import Foundation
 
 func findEnabledCopyItemInFrontmostApp() -> UIElement? {
     guard checkIsProcessTrusted(prompt: true) else {
@@ -37,23 +37,57 @@ func findEnabledCopyItemInFrontmostApp() -> UIElement? {
 
 extension UIElement {
     /// Find the copy item element, identifier is "copy:", or title is "Copy".
+    /// Search strategy: Start from the 4th item (usually Edit menu),
+    /// then expand to adjacent items alternately.
+    /// Search index order: 3 -> 2 -> 4 -> 1 -> 5 -> 0 -> 6
     public func findCopyMenuItem() -> UIElement? {
         guard let menu, let menuChildren = menu.children else {
             logError("Menu children not found")
             return nil
         }
 
-        // Try to get the 4th menu item, which usually is the Edit menu.
-        if menuChildren.count >= 4 {
-            let editMenu = menuChildren[3]
+        let totalItems = menuChildren.count
+
+        // Start from index 3 (4th item) if available
+        let startIndex = 3
+
+        // If we have enough items, try the 4th item first (usually Edit menu)
+        if totalItems > startIndex {
+            let editMenu = menuChildren[startIndex]
             logInfo("Checking the Edit(4th) menu")
             if let copyElement = findCopyMenuItemIn(editMenu) {
                 return copyElement
             }
+
+            // Search adjacent items alternately
+            for offset in 1...(max(startIndex, totalItems - startIndex - 1)) {
+                // Try left item
+                let leftIndex = startIndex - offset
+                if leftIndex >= 0 {
+                    logInfo("Checking menu at index \(leftIndex)")
+                    if let copyElement = findCopyMenuItemIn(menuChildren[leftIndex]) {
+                        return copyElement
+                    }
+                }
+
+                // Try right item
+                let rightIndex = startIndex + offset
+                if rightIndex < totalItems {
+                    logInfo("Checking menu at index \(rightIndex)")
+                    if let copyElement = findCopyMenuItemIn(menuChildren[rightIndex]) {
+                        return copyElement
+                    }
+                }
+
+                // If both indices are out of bounds, stop searching
+                if leftIndex < 0 && rightIndex >= totalItems {
+                    break
+                }
+            }
         }
 
-        // If not found in Edit menu, search the entire menu.
-        logInfo("Copy not found in Edit(4th) menu, searching entire menu")
+        // If still not found, search the entire menu as fallback
+        logInfo("Copy not found in adjacent menus, searching entire menu")
         return findCopyMenuItemIn(menu)
     }
 

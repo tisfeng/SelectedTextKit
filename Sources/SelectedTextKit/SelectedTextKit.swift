@@ -80,6 +80,7 @@ public func getSelectedTextByAXUI() async -> Result<String, AXError> {
 }
 
 /// Get selected text by menu bar action copy
+///
 /// Refer to Copi: https://github.com/s1ntoneli/Copi/blob/531a12fdc2da66c809951926ce88af02593e0723/Copi/Utilities/SystemUtilities.swift#L257
 @MainActor
 public func getSelectedTextByMenuBarActionCopy() async throws -> String? {
@@ -140,7 +141,7 @@ func getNextPasteboardContent(
             return
         }
 
-        await pollTask {
+        await pollTask { @MainActor in
             // Check if the pasteboard content has changed
             if pasteboard.changeCount != initialChangeCount {
                 // !!!: The pasteboard content may be nil or other strange content(such as old content) if the pasteboard is changing by other applications in the same time, like PopClip.
