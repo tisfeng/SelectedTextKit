@@ -54,7 +54,7 @@ extension UIElement {
         // If we have enough items, try the 4th item first (usually Edit menu)
         if totalItems > startIndex {
             let editMenu = menuChildren[startIndex]
-            logInfo("Checking the Edit(4th) menu")
+            logInfo("Checking the Edit menu, index: \(startIndex)")
             if let copyElement = findCopyMenuItemIn(editMenu) {
                 return copyElement
             }
