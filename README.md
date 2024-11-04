@@ -2,6 +2,8 @@
 
 This is a macOS library that allows you to easily get the selected text.
 
+It's a part of [Easydict](https://github.com/tisfeng/Easydict).
+
 ### Features
 
 - [x] Get selected text via AXUI
