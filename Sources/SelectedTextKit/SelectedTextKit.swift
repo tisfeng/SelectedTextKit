@@ -18,21 +18,30 @@ public func getSelectedText() async throws -> String? {
     let axResult = await getSelectedTextByAXUI()
     switch axResult {
     case let .success(text):
-        logInfo("Successfully got text via AXUI")
-        return text
-
-    case let .failure(error):
-        logError("Failed to get text via AXUI")
-
-        // If AXUI fails, try menu action copy
-        if let menuCopyText = try await getSelectedTextByMenuBarActionCopy() {
-            logInfo("Successfully got text via menu action copy")
-            return menuCopyText
+        if !text.isEmpty {
+            logInfo("Successfully got non-empty text via AXUI")
+            return text
+        } else {
+            logInfo("AXUI returned empty text, trying menu action copy")
+            // Fall through to try menu action copy
         }
 
-        logError("All methods to get selected text have failed")
-        return nil
+    case let .failure(error):
+        logError("Failed to get text via AXUI: \(error)")
     }
+
+    // If AXUI fails or returns empty text, try menu action copy
+    if let menuCopyText = try await getSelectedTextByMenuBarActionCopy() {
+        if !menuCopyText.isEmpty {
+            logInfo("Successfully got non-empty text via menu action copy")
+            return menuCopyText
+        } else {
+            logInfo("Menu action copy returned empty text")
+        }
+    }
+
+    logError("All methods to get selected text have failed or returned empty text")
+    return nil
 }
 
 /// Get selected text by AXUI
@@ -113,7 +122,7 @@ public func getSelectedTextByShortcutCopy() async -> String? {
 func getSelectedTextWithAction(
     action: @escaping () throws -> Void
 ) async -> String? {
-    return await getNextPasteboardContent(triggeredBy: action)
+    await getNextPasteboardContent(triggeredBy: action)
 }
 
 /// Get the next pasteboard content after executing an action.
