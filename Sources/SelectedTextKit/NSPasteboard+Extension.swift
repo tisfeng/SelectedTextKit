@@ -12,10 +12,11 @@ private var kSavedItemsKey: UInt8 = 0
 
 extension NSPasteboard {
     /// Protect the pasteboard items from being changed by temporary tasks.
+    @MainActor
     func performTemporaryTask(
         _ task: @escaping () async -> Void,
         restoreDelay: TimeInterval = 0
-    ) async -> Void {
+    ) async {
         saveCurrentContents()
 
         await task()
@@ -28,6 +29,7 @@ extension NSPasteboard {
 }
 
 extension NSPasteboard {
+    @MainActor
     func saveCurrentContents() {
         var archivedItems = [NSPasteboardItem]()
         if let allItems = pasteboardItems {
@@ -47,6 +49,7 @@ extension NSPasteboard {
         }
     }
 
+    @MainActor
     func restoreOriginalContents() {
         if let items = savedItems {
             clearContents()
