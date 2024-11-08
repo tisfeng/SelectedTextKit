@@ -8,7 +8,7 @@
 
 import AppKit
 
-private var kSavedItemsKey: UInt8 = 0
+private var kBackupItemsKey: UInt8 = 0
 
 extension NSPasteboard {
     /// Protect the pasteboard items from being changed by temporary tasks.
@@ -31,39 +31,39 @@ extension NSPasteboard {
 extension NSPasteboard {
     @MainActor
     func saveCurrentContents() {
-        var archivedItems = [NSPasteboardItem]()
-        if let allItems = pasteboardItems {
-            for item in allItems {
-                let archivedItem = NSPasteboardItem()
+        var backupItems = [NSPasteboardItem]()
+        if let items = pasteboardItems {
+            for item in items {
+                let backupItem = NSPasteboardItem()
                 for type in item.types {
                     if let data = item.data(forType: type) {
-                        archivedItem.setData(data, forType: type)
+                        backupItem.setData(data, forType: type)
                     }
                 }
-                archivedItems.append(archivedItem)
+                backupItems.append(backupItem)
             }
         }
 
-        if !archivedItems.isEmpty {
-            savedItems = archivedItems
+        if !backupItems.isEmpty {
+            self.backupItems = backupItems
         }
     }
 
     @MainActor
     func restoreOriginalContents() {
-        if let items = savedItems {
+        if let items = backupItems {
             clearContents()
             writeObjects(items)
-            savedItems = nil
+            backupItems = nil
         }
     }
 
-    private var savedItems: [NSPasteboardItem]? {
+    private var backupItems: [NSPasteboardItem]? {
         get {
-            objc_getAssociatedObject(self, &kSavedItemsKey) as? [NSPasteboardItem]
+            objc_getAssociatedObject(self, &kBackupItemsKey) as? [NSPasteboardItem]
         }
         set {
-            objc_setAssociatedObject(self, &kSavedItemsKey, newValue, .OBJC_ASSOCIATION_RETAIN)
+            objc_setAssociatedObject(self, &kBackupItemsKey, newValue, .OBJC_ASSOCIATION_RETAIN)
         }
     }
 }
