@@ -31,21 +31,31 @@ extension NSPasteboard {
 extension NSPasteboard {
     @MainActor
     func saveCurrentContents() {
-        var backupItems = [NSPasteboardItem]()
-        if let items = pasteboardItems {
-            for item in items {
-                let backupItem = NSPasteboardItem()
-                for type in item.types {
-                    if let data = item.data(forType: type) {
-                        backupItem.setData(data, forType: type)
-                    }
-                }
-                backupItems.append(backupItem)
-            }
-        }
+        /**
+         FIX crash:
 
-        if !backupItems.isEmpty {
-            self.backupItems = backupItems
+         AppKit     -[NSPasteboardItem dataForType:]
+         Easydict   (extension in SelectedTextKit):__C.NSPasteboard.saveCurrentContents() -> () NSPasteboard+Extension.swift:39
+         */
+        do {
+            var backupItems = [NSPasteboardItem]()
+            if let items = pasteboardItems {
+                for item in items {
+                    let backupItem = NSPasteboardItem()
+                    for type in item.types {
+                        if let data = item.data(forType: type) {
+                            backupItem.setData(data, forType: type)
+                        }
+                    }
+                    backupItems.append(backupItem)
+                }
+            }
+
+            if !backupItems.isEmpty {
+                self.backupItems = backupItems
+            }
+        } catch {
+            logError("Failed to save current contents: \(error)")
         }
     }
 
