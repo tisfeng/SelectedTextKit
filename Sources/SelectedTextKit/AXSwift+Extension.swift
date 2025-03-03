@@ -11,7 +11,8 @@ import AXSwiftExt
 import AppKit
 import Foundation
 
-func findEnabledCopyItemInFrontmostApp() -> UIElement? {
+/// Find the copy item in the frontmost application.
+public func findCopyMenuItem() -> UIElement? {
     guard checkIsProcessTrusted(prompt: true) else {
         logError("Process is not trusted for accessibility")
         return nil
@@ -23,14 +24,19 @@ func findEnabledCopyItemInFrontmostApp() -> UIElement? {
         return nil
     }
 
-    guard let copyItem = appElement.findCopyMenuItem(),
-        copyItem.isEnabled == true
-    else {
-        logInfo("No enabled copy item found in frontmost application: \(frontmostApp)")
+    logInfo("Checking copy item in frontmost application: \(frontmostApp)")
+
+    return appElement.findCopyMenuItem()
+}
+
+/// Find the enabled copy item in the frontmost application.
+public func findEnabledCopyItem() -> UIElement? {
+    guard let copyItem = findCopyMenuItem(), copyItem.isEnabled == true else {
+        logError("Copy item not found or not enabled")
         return nil
     }
 
-    logInfo("Found enabled copy item in frontmost application: \(frontmostApp)")
+    logInfo("Found enabled copy item in frontmost application menu")
 
     return copyItem
 }

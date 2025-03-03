@@ -95,7 +95,7 @@ public func getSelectedTextByAXUI() async -> Result<String, AXError> {
 public func getSelectedTextByMenuBarActionCopy() async throws -> String? {
     logInfo("Getting selected text by menu bar action copy")
 
-    guard let copyItem = findEnabledCopyItemInFrontmostApp() else {
+    guard let copyItem = findEnabledCopyItem() else {
         return nil
     }
 
