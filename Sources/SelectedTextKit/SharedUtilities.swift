@@ -40,12 +40,12 @@ public func pollTask(
 }
 
 /// Copy text and paste text.
-public func copyTextAndPaste(_ text: String) async {
+public func copyTextAndPaste(_ text: String, preservePasteboard: Bool = true) async {
     logInfo("Copy text and paste text safely")
 
     let newContent = await getNextPasteboardContent(triggeredBy: {
         text.copyToClipboard()
-    }, preservePasteboard: false)
+    }, preservePasteboard: preservePasteboard)
 
     if let text = newContent {
         postPasteEvent()
