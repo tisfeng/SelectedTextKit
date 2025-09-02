@@ -11,35 +11,21 @@ import AXSwiftExt
 import AppKit
 import Foundation
 
+// MARK: - Legacy Global Functions (moved to AccessibilityManager)
+
 /// Find the copy item in the frontmost application.
+/// - Note: This is a legacy function for backward compatibility. Use AccessibilityManager().findCopyMenuItem() instead.
 public func findCopyMenuItem() -> UIElement? {
-    guard checkIsProcessTrusted(prompt: true) else {
-        logError("Process is not trusted for accessibility")
-        return nil
-    }
-
-    let frontmostApp = NSWorkspace.shared.frontmostApplication
-    guard let frontmostApp, let appElement = Application(frontmostApp) else {
-        logError("Failed to get frontmost application: \(String(describing: frontmostApp))")
-        return nil
-    }
-
-    logInfo("Checking copy item in frontmost application: \(frontmostApp)")
-
-    return appElement.findCopyMenuItem()
+    return AccessibilityManager().findCopyMenuItem()
 }
 
 /// Find the enabled copy item in the frontmost application.
+/// - Note: This is a legacy function for backward compatibility. Use AccessibilityManager().findEnabledCopyItem() instead.
 public func findEnabledCopyItem() -> UIElement? {
-    guard let copyItem = findCopyMenuItem(), copyItem.isEnabled == true else {
-        logError("Copy item not found or not enabled")
-        return nil
-    }
-
-    logInfo("Found enabled copy item in frontmost application menu")
-
-    return copyItem
+    return AccessibilityManager().findEnabledCopyItem()
 }
+
+// MARK: - UIElement Extensions
 
 extension UIElement {
     /// Find the copy item element, identifier is "copy:", or title is "Copy".
@@ -111,12 +97,16 @@ extension UIElement {
     }
 }
 
+// MARK: - NSRunningApplication Extensions
+
 /// NSRunningApplication extension description: localizedName (bundleIdentifier)
 extension NSRunningApplication {
     open override var description: String {
         "\(localizedName ?? "") (\(bundleIdentifier ?? ""))"
     }
 }
+
+// MARK: - Private Helper Functions
 
 private func findCopyMenuItemIn(_ menuElement: UIElement) -> UIElement? {
     menuElement.deepFirst { element in
