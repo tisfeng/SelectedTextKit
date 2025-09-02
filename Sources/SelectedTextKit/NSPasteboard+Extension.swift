@@ -28,6 +28,9 @@ extension NSPasteboard {
     }
 }
 
+// MARK: - NSPasteboard Extension for Saving and Restoring Contents
+
+@objc
 extension NSPasteboard {
     @MainActor
     func saveCurrentContents() {

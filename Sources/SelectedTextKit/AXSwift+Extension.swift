@@ -11,20 +11,6 @@ import AXSwiftExt
 import AppKit
 import Foundation
 
-// MARK: - Legacy Global Functions (moved to AccessibilityManager)
-
-/// Find the copy item in the frontmost application.
-/// - Note: This is a legacy function for backward compatibility. Use AccessibilityManager().findCopyMenuItem() instead.
-public func findCopyMenuItem() -> UIElement? {
-    return AccessibilityManager().findCopyMenuItem()
-}
-
-/// Find the enabled copy item in the frontmost application.
-/// - Note: This is a legacy function for backward compatibility. Use AccessibilityManager().findEnabledCopyItem() instead.
-public func findEnabledCopyItem() -> UIElement? {
-    return AccessibilityManager().findEnabledCopyItem()
-}
-
 // MARK: - UIElement Extensions
 
 extension UIElement {

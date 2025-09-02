@@ -16,21 +16,26 @@ import Foundation
 
 /// Get selected text using multiple fallback methods
 /// - Returns: Selected text or nil if failed
-/// - Note: This is a legacy function for backward compatibility. Use `SelectedTextManager.shared.getSelectedText()` instead.
+@available(macOS, deprecated, message: "Use SelectedTextManager.shared.getSelectedText() instead.")
 public func getSelectedText() async throws -> String? {
     return try await SelectedTextManager.shared.getSelectedText()
 }
 
 /// Get selected text by AXUI
 /// - Returns: Selected text or nil if failed, throws on error
-/// - Note: This is a legacy function for backward compatibility. Use `SelectedTextManager.shared.getSelectedTextByAXUI()` instead.
+@available(
+    macOS, deprecated, message: "Use SelectedTextManager.shared.getSelectedTextByAXUI() instead."
+)
 public func getSelectedTextByAXUI() async throws -> String? {
     return try await SelectedTextManager.shared.getSelectedTextByAXUI()
 }
 
 /// Get selected text by menu bar action copy
 /// - Returns: Selected text or nil if failed
-/// - Note: This is a legacy function for backward compatibility. Use `SelectedTextManager.shared.getSelectedTextByMenuBarActionCopy()` instead.
+@available(
+    macOS, deprecated,
+    message: "Use SelectedTextManager.shared.getSelectedTextByMenuBarActionCopy() instead."
+)
 @MainActor
 public func getSelectedTextByMenuBarActionCopy() async throws -> String? {
     return try await SelectedTextManager.shared.getSelectedTextByMenuBarActionCopy()
@@ -38,7 +43,38 @@ public func getSelectedTextByMenuBarActionCopy() async throws -> String? {
 
 /// Get selected text by shortcut copy (Cmd+C)
 /// - Returns: Selected text or nil if failed
-/// - Note: This is a legacy function for backward compatibility. Use `SelectedTextManager.shared.getSelectedTextByShortcutCopy()` instead.
+@available(
+    macOS, deprecated,
+    message: "Use SelectedTextManager.shared.getSelectedTextByShortcutCopy() instead."
+)
 public func getSelectedTextByShortcutCopy() async -> String? {
     return await SelectedTextManager.shared.getSelectedTextByShortcutCopy()
+}
+
+// MARK: - Legacy Global Functions (moved to AccessibilityManager)
+
+/// Find the copy item in the frontmost application.
+@available(macOS, deprecated, message: "Use AccessibilityManager().findCopyMenuItem() instead.")
+public func findCopyMenuItem() -> UIElement? {
+    return AccessibilityManager().findCopyMenuItem()
+}
+
+/// Find the enabled copy item in the frontmost application.
+@available(macOS, deprecated, message: "Use AccessibilityManager().findEnabledCopyItem() instead.")
+public func findEnabledCopyItem() -> UIElement? {
+    return AccessibilityManager().findEnabledCopyItem()
+}
+
+// MARK: - Public API for Objective-C compatibility
+
+/// Copy text and paste it (Legacy function for backward compatibility)
+/// - Parameters:
+///   - text: Text to copy and paste
+///   - preservePasteboard: Whether to preserve original pasteboard content
+@available(
+    macOS, deprecated,
+    message: "Use SelectedTextManager.shared.copyTextAndPaste(_:preservePasteboard:) instead."
+)
+public func copyTextAndPaste(_ text: String, preservePasteboard: Bool = true) async {
+    await SelectedTextManager.shared.copyTextAndPaste(text, preservePasteboard: preservePasteboard)
 }

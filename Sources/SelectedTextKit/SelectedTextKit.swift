@@ -12,9 +12,21 @@
 
 import Foundation
 
-/// SelectedTextKit version information
+/// Namespace for informational SelectedTextKit values.
+public enum STKInfo {
+    /// Current SelectedTextKit version.
+    public static let version = "2.0.0"
+
+    /// Library name.
+    public static let name = "SelectedTextKit"
+}
+
+/// SelectedTextKit version information for Objective-C compatibility
 @objc(STKVersionInfo)
 public final class VersionInfo: NSObject {
-    @objc public static let libraryVersion = "1.0.0"
-    @objc public static let build = "1"
+    /// Current library version
+    @objc public static let libraryVersion = STKInfo.version
+
+    /// Library name
+    @objc public static let libraryName = STKInfo.name
 }

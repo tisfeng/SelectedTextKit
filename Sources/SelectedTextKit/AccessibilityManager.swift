@@ -16,7 +16,7 @@ public final class AccessibilityManager: NSObject {
 
     /// Get selected text by AXUI
     /// - Returns: Selected text or throws AXError
-    public func getSelectedTextByAXUI() async throws -> String? {
+    @objc public func getSelectedTextByAXUI() async throws -> String? {
         logInfo("Getting selected text via AXUI")
 
         let systemWideElement = AXUIElementCreateSystemWide()
