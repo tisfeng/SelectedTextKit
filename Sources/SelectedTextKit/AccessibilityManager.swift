@@ -16,6 +16,7 @@ public final class AccessibilityManager: NSObject {
 
     /// Get selected text by AXUI
     /// - Returns: Selected text or throws AXError
+    /// - Important: objc can get AXError value by NSError.code
     @objc public func getSelectedTextByAXUI() async throws -> String? {
         logInfo("Getting selected text via AXUI")
 

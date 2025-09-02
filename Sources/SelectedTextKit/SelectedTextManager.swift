@@ -108,3 +108,11 @@ public final class SelectedTextManager: NSObject {
         await pasteboardManager.copyTextAndPaste(text, preservePasteboard: preservePasteboard)
     }
 }
+
+// MARK: - AXError to conform to NSError for better interoperability
+
+extension AXError: CustomNSError {
+    public var errorCode: Int {
+        return Int(self.rawValue)
+    }
+}
