@@ -10,7 +10,7 @@ import AppKit
 
 private var kBackupItemsKey: UInt8 = 0
 
-extension NSPasteboard {
+public extension NSPasteboard {
     /// Protect the pasteboard items from being changed by temporary tasks.
     @MainActor
     func performTemporaryTask(
@@ -30,10 +30,9 @@ extension NSPasteboard {
 
 // MARK: - NSPasteboard Extension for Saving and Restoring Contents
 
-@objc
-extension NSPasteboard {
+public extension NSPasteboard {
     @MainActor
-    func saveCurrentContents() {
+    @objc func saveCurrentContents() {
         /**
          FIX crash:
 
@@ -65,7 +64,7 @@ extension NSPasteboard {
     }
 
     @MainActor
-    func restoreOriginalContents() {
+    @objc func restoreOriginalContents() {
         if let items = backupItems {
             clearContents()
             writeObjects(items)

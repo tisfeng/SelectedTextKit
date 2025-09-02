@@ -13,7 +13,7 @@ import Foundation
 
 // MARK: - UIElement Extensions
 
-extension UIElement {
+public extension UIElement {
     /// Find the copy item element, identifier is "copy:", or title is "Copy".
     /// Search strategy: Start from the 4th item (usually Edit menu),
     /// then expand to adjacent items alternately.
