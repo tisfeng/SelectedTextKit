@@ -1,5 +1,5 @@
 //
-//  AccessibilityManager.swift
+//  AXManager.swift
 //  SelectedTextKit
 //
 //  Created by tisfeng on 2024/10/3.
@@ -11,52 +11,50 @@ import AppKit
 import Foundation
 
 /// Manager class for accessibility-related operations
-@objc(STKAccessibilityManager)
-public final class AccessibilityManager: NSObject {
+@objc(STKAXManager)
+public final class AXManager: NSObject {
 
-    /// Get selected text by AXUI
+    @objc public static let shared = AXManager()
+
+    /// A `UIElement` for frontmost application.
+    var frontmostAppElement: UIElement? {
+        let frontmostApp = NSWorkspace.shared.frontmostApplication
+        guard let frontmostApp else {
+            return nil
+        }
+        return Application(frontmostApp)
+    }
+
+    /// Bundle identifier of the frontmost application.
+    var frontmostAppBundleID: String {
+        NSWorkspace.shared.frontmostApplication?.bundleIdentifier ?? ""
+    }
+
+    /// Get selected text by AX
     /// - Returns: Selected text or throws AXError
     /// - Important: objc can get AXError value by NSError.code
-    @objc public func getSelectedTextByAXUI() async throws -> String? {
-        logInfo("Getting selected text via AXUI")
+    @objc public func getSelectedTextByAX() async throws -> String? {
+        logInfo("Getting selected text via AX")
 
-        let systemWideElement = AXUIElementCreateSystemWide()
-        var focusedElementRef: CFTypeRef?
+        // Get frontmost application element
+        guard let frontmostAppElement = frontmostAppElement else {
+            logError("Failed to get frontmost application element")
+            throw AXError.invalidUIElement
+        }
 
         // Get the currently focused element
-        let focusedElementResult = AXUIElementCopyAttributeValue(
-            systemWideElement,
-            kAXFocusedUIElementAttribute as CFString,
-            &focusedElementRef
-        )
-
-        guard focusedElementResult == .success,
-            let focusedElement = focusedElementRef as! AXUIElement?
-        else {
-            logError("Failed to get focused element, error: \(focusedElementResult)")
-            throw focusedElementResult
+        guard let focusedUIElement = try frontmostAppElement.focusedUIElement() else {
+            logError("Failed to get focused UI element")
+            throw AXError.invalidUIElement
         }
-
-        var selectedTextValue: CFTypeRef?
 
         // Get the selected text
-        let selectedTextResult = AXUIElementCopyAttributeValue(
-            focusedElement,
-            kAXSelectedTextAttribute as CFString,
-            &selectedTextValue
-        )
-
-        guard selectedTextResult == .success else {
-            logError("Failed to get selected text, error: \(selectedTextResult)")
-            throw selectedTextResult
-        }
-
-        guard let selectedText = selectedTextValue as? String else {
-            logError("Selected text is not a string, error: \(selectedTextResult)")
+        guard  let selectedText = try focusedUIElement.selectedText() else {
+            logError("No selected text available")
             throw AXError.noValue
         }
 
-        logInfo("Selected text via AXUI: \(selectedText)")
+        logInfo("Selected text via AX: \(selectedText)")
         return selectedText
     }
 
@@ -90,5 +88,13 @@ public final class AccessibilityManager: NSObject {
         logInfo("Found enabled copy item in frontmost application menu")
 
         return copyItem
+    }
+}
+
+// MARK: - AXError to conform to NSError for better interoperability
+
+extension AXError: @retroactive CustomNSError {
+    public var errorCode: Int {
+        return Int(self.rawValue)
     }
 }

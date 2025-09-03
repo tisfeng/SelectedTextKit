@@ -8,10 +8,15 @@
 
 import AppKit
 import Foundation
+import KeySender
 
 /// Manager class for pasteboard-related operations
 @objc(STKPasteboardManager)
 public final class PasteboardManager: NSObject {
+
+    /// Shared singleton instance
+    @objc
+    public static let shared = PasteboardManager()
 
     /// Get selected text with a given action
     /// - Parameter action: Action to execute that should trigger a pasteboard change
@@ -52,7 +57,7 @@ public final class PasteboardManager: NSObject {
                 // Check if the pasteboard content has changed
                 if pasteboard.changeCount != initialChangeCount {
                     // !!!: The pasteboard content may be nil or other strange content(such as old content) if the pasteboard is changing by other applications in the same time, like PopClip.
-                    newContent = pasteboard.string()
+                    newContent = pasteboard.string
                     if let newContent {
                         logInfo("New Pasteboard content: \(newContent)")
                         return true
@@ -83,14 +88,24 @@ public final class PasteboardManager: NSObject {
 
         let newContent = await getNextPasteboardContent(
             triggeredBy: {
-                text.copyToClipboard()
+                text.copyToPasteboard()
             }, preservePasteboard: preservePasteboard)
 
         if let text = newContent {
-            postPasteEvent()
+            KeySender.copy()
             logInfo("Pasted text: \(text)")
         } else {
             logError("Failed to paste text")
         }
+    }
+}
+
+// MARK: - String + Pasteboard
+
+extension String {
+    func copyToPasteboard() {
+        let pasteboard = NSPasteboard.general
+        pasteboard.clearContents()
+        pasteboard.setString(self, forType: .string)
     }
 }

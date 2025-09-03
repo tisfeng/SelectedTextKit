@@ -8,46 +8,50 @@
 
 import AppKit
 
-private var kBackupItemsKey: UInt8 = 0
-
-public extension NSPasteboard {
+extension NSPasteboard {
     /// Protect the pasteboard items from being changed by temporary tasks.
+    /// This method will backup current pasteboard contents, execute the task, and then restore the original contents.
+    /// - Parameters:
+    ///   - task: The async task to execute
+    ///   - restoreDelay: Optional delay before restoring contents (default: 0)
     @MainActor
-    func performTemporaryTask(
+    public func performTemporaryTask(
         _ task: @escaping () async -> Void,
         restoreDelay: TimeInterval = 0
     ) async {
-        saveCurrentContents()
+        let savedItems = backupItems()
 
         await task()
 
         if restoreDelay > 0 {
             try? await Task.sleep(nanoseconds: UInt64(restoreDelay * 1_000_000_000))
         }
-        restoreOriginalContents()
+        _ = restoreItems(savedItems)
     }
 }
 
 // MARK: - NSPasteboard Extension for Saving and Restoring Contents
 
-public extension NSPasteboard {
+extension NSPasteboard {
+    /// Save current pasteboard contents and return the saved items
+    /// - Returns: Array of saved pasteboard items
     @MainActor
-    @objc func saveCurrentContents() {
+    @objc public func backupItems() -> [NSPasteboardItem] {
         /**
-         FIX crash:
-         
+         Fix crash:
+        
          AppKit     -[NSPasteboardItem dataForType:]
          Easydict   (extension in SelectedTextKit):__C.NSPasteboard.saveCurrentContents() -> () NSPasteboard+Extension.swift:39
-         
+        
          ------
-         
+        
          Fix crash:
-         
+        
          *** -[__NSArrayM objectAtIndex:]: index 1 beyond bounds for empty array
          -[NSPasteboard _updateTypeCacheIfNeeded]
          -[NSPasteboard _typesAtIndex:combinesItems:]
          */
-        var backupItems = [NSPasteboardItem]()
+        var itemsToBackup = [NSPasteboardItem]()
         if let items = self.pasteboardItems {
             for item in items {
                 let backupItem = NSPasteboardItem()
@@ -57,48 +61,38 @@ public extension NSPasteboard {
                         backupItem.setData(data, forType: type)
                     }
                 }
-                backupItems.append(backupItem)
+                itemsToBackup.append(backupItem)
             }
         }
-        
-        if !backupItems.isEmpty {
-            self.backupItems = backupItems
-        }
+
+        return itemsToBackup
     }
 
+    /// Restore pasteboard contents from saved items
+    /// - Parameter pasteboardItems: Array of pasteboard items to restore
+    /// - Returns: True if restoration was successful, false otherwise
     @MainActor
-    @objc func restoreOriginalContents() {
-        if let items = backupItems {
-            clearContents()
-            writeObjects(items)
-            backupItems = nil
+    @objc public func restoreItems(_ pasteboardItems: [NSPasteboardItem]) -> Bool {
+        guard !pasteboardItems.isEmpty else {
+            logInfo("No pasteboard items to restore")
+            return false
         }
-    }
 
-    private var backupItems: [NSPasteboardItem]? {
-        get {
-            objc_getAssociatedObject(self, &kBackupItemsKey) as? [NSPasteboardItem]
-        }
-        set {
-            objc_setAssociatedObject(self, &kBackupItemsKey, newValue, .OBJC_ASSOCIATION_RETAIN)
-        }
+        clearContents()
+        let success = writeObjects(pasteboardItems)
+
+        return success
     }
 }
 
 extension NSPasteboard {
-    func setString(_ string: String?) {
-        clearContents()
-        if let string {
-            setString(string, forType: .string)
+    /// A convenience property to get and set string content on the pasteboard.
+    @objc
+    var string: String {
+        get { string(forType: .string) ?? "" }
+        set {
+            clearContents()
+            setString(newValue, forType: .string)
         }
-    }
-
-    func string() -> String? {
-        // Check if there is text type data
-        guard let types = types, types.contains(.string) else {
-            logInfo("No string type data found: \(types)")
-            return nil
-        }
-        return string(forType: .string)
     }
 }

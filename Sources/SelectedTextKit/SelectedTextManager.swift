@@ -9,6 +9,7 @@
 import AXSwift
 import AXSwiftExt
 import Cocoa
+import KeySender
 
 /// Main manager class for getting selected text from applications
 @objc(STKSelectedTextManager)
@@ -18,10 +19,8 @@ public final class SelectedTextManager: NSObject {
     @objc
     public static let shared = SelectedTextManager()
 
-    private let accessibilityManager = AccessibilityManager()
-    private let pasteboardManager = PasteboardManager()
-
-    private override init() {}
+    private let axManager = AXManager.shared
+    private let pasteboardManager = PasteboardManager.shared
 
     /// Get selected text using multiple fallback methods
     /// 1. Try AXUI method first
@@ -33,7 +32,7 @@ public final class SelectedTextManager: NSObject {
 
         // Try AXUI method first
         do {
-            if let text = try await accessibilityManager.getSelectedTextByAXUI() {
+            if let text = try await axManager.getSelectedTextByAX() {
                 if !text.isEmpty {
                     logInfo("Successfully got non-empty text via AXUI")
                     return text
@@ -47,7 +46,7 @@ public final class SelectedTextManager: NSObject {
         }
 
         // If AXUI fails or returns empty text, try menu action copy
-        if let menuCopyText = try await getSelectedTextByMenuBarActionCopy() {
+        if let menuCopyText = try await getSelectedTextByMenuAction() {
             if !menuCopyText.isEmpty {
                 logInfo("Successfully got non-empty text via menu action copy")
                 return menuCopyText
@@ -63,18 +62,18 @@ public final class SelectedTextManager: NSObject {
     /// Get selected text by AXUI
     /// - Returns: Selected text or nil if failed, throws on error
     @objc
-    public func getSelectedTextByAXUI() async throws -> String? {
-        return try await accessibilityManager.getSelectedTextByAXUI()
+    public func getSelectedTextByAX() async throws -> String? {
+        return try await axManager.getSelectedTextByAX()
     }
 
     /// Get selected text by menu bar action copy
     /// - Returns: Selected text or nil if failed
     @MainActor
     @objc
-    public func getSelectedTextByMenuBarActionCopy() async throws -> String? {
+    public func getSelectedTextByMenuAction() async throws -> String? {
         logInfo("Getting selected text by menu bar action copy")
 
-        guard let copyItem = accessibilityManager.findEnabledCopyItem() else {
+        guard let copyItem = axManager.findEnabledCopyItem() else {
             return nil
         }
 
@@ -86,7 +85,7 @@ public final class SelectedTextManager: NSObject {
     /// Get selected text by shortcut copy (Cmd+C)
     /// - Returns: Selected text or nil if failed
     @objc
-    public func getSelectedTextByShortcutCopy() async -> String? {
+    public func getSelectedTextByShortcut() async -> String? {
         logInfo("Getting selected text by shortcut copy")
 
         guard checkIsProcessTrusted(prompt: true) else {
@@ -95,7 +94,7 @@ public final class SelectedTextManager: NSObject {
         }
 
         return await pasteboardManager.getSelectedTextWithAction {
-            postCopyEvent()
+            KeySender.copy()
         }
     }
 
@@ -106,13 +105,5 @@ public final class SelectedTextManager: NSObject {
     @objc
     public func copyTextAndPaste(_ text: String, preservePasteboard: Bool = true) async {
         await pasteboardManager.copyTextAndPaste(text, preservePasteboard: preservePasteboard)
-    }
-}
-
-// MARK: - AXError to conform to NSError for better interoperability
-
-extension AXError: CustomNSError {
-    public var errorCode: Int {
-        return Int(self.rawValue)
     }
 }

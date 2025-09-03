@@ -13,7 +13,7 @@ import Foundation
 
 // MARK: - UIElement Extensions
 
-public extension UIElement {
+extension UIElement {
     /// Find the copy item element, identifier is "copy:", or title is "Copy".
     /// Search strategy: Start from the 4th item (usually Edit menu),
     /// then expand to adjacent items alternately.
@@ -83,7 +83,36 @@ public extension UIElement {
     }
 }
 
-// MARK: - NSRunningApplication Extensions
+// MARK: - UIElement Attribute Extensions
+
+extension UIElement {
+    /// Get focused UI element, throws error if failed
+    public func focusedUIElement() throws -> UIElement? {
+        try attribute(.focusedUIElement)
+    }
+
+    /// Get role value, throws error if failed
+    public func roleValue() throws -> String? {
+        try attribute(.role)
+    }
+
+    /// Get value, throws error if failed
+    public func value() throws -> String? {
+        try attribute(.value)
+    }
+
+    /// Get selected text, throws error if failed
+    public func selectedText() throws -> String? {
+        try attribute(.selectedText)
+    }
+
+    /// Get selected text range, throws error if failed
+    public func selectedRange() throws -> CFRange? {
+        try attribute(.selectedTextRange)
+    }
+}
+
+// MARK: - NSRunningApplication Description
 
 /// NSRunningApplication extension description: localizedName (bundleIdentifier)
 extension NSRunningApplication {

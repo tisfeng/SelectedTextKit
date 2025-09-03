@@ -14,7 +14,7 @@ It's a part of [Easydict](https://github.com/tisfeng/Easydict).
 
 - ✅ **Pasteboard Protection**
   - Backup and restore pasteboard contents
-  - Execute temporary tasks without polluting user's clipboard
+  - Execute temporary tasks without polluting user's pasteboard
   - Convenient pasteboard string operations
 
 - ✅ **Cross-Language Support**
@@ -92,8 +92,7 @@ Convenient functions for pasteboard operations:
 ### NSPasteboard Extensions
 
 - `performTemporaryTask(_:restoreDelay:)` - Protected task execution
-- `setString(_:)` / `string()` - Simplified string operations
-- `saveCurrentContents()` / `restoreOriginalContents()` - Content management
+- `backupItems()` / `restoreOriginalContents()` - Content management
 
 ## Requirements
 

@@ -33,31 +33,49 @@ public func pollTask(
         if await task() {
             return true
         }
-        try await wait(for: interval)
+        await Task.sleep(seconds: interval)
     }
     logInfo("pollTask timeout")
     return false
 }
 
-/// Post copy event: Cmd+C
-func postCopyEvent() {
-    let sender = KeySender(key: .c, modifiers: .command)
-    sender.sendGlobally()
-}
+// MARK: - KeySender Extensions
 
-/// Post paste event: Cmd+V
-func postPasteEvent() {
-    let sender = KeySender(key: .v, modifiers: .command)
-    sender.sendGlobally()
-}
+public extension KeySender {
+    /// Copy (Cmd+C)
+    static func copy() {
+        let sender = KeySender(key: .c, modifiers: .command)
+        sender.sendGlobally()
+    }
 
-extension String {
-    func copyToClipboard() {
-        let pasteboard = NSPasteboard.general
-        pasteboard.clearContents()
-        pasteboard.setString(self, forType: .string)
+    /// Paste (Cmd+V)
+    static func paste() {
+        let sender = KeySender(key: .v, modifiers: .command)
+        sender.sendGlobally()
+    }
+
+    /// Select All (Cmd+A)
+    static func selectAll() {
+        let sender = KeySender(key: .a, modifiers: .command)
+        sender.sendGlobally()
     }
 }
+
+// MARK: - Task Extensions
+
+extension Task where Success == Never, Failure == Never {
+    /// Sleep for given seconds within a Task
+    static func sleep(seconds: TimeInterval) async {
+        try? await Task.sleepThrowing(seconds: seconds)
+    }
+
+    /// Sleep for given seconds within a Task, throwing an error if cancelled
+    static func sleepThrowing(seconds: TimeInterval) async throws {
+        try await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000))
+    }
+}
+
+// MARK: - Measure Execution Time
 
 func measureTime(block: () -> Void) {
     let startTime = DispatchTime.now()
@@ -68,9 +86,4 @@ func measureTime(block: () -> Void) {
     let milliseconds = Double(nanoseconds) / 1_000_000
 
     print("Execution time: \(milliseconds) ms")
-}
-
-/// Wait for seconds.
-func wait(for seconds: TimeInterval) async {
-    try? await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000))
 }

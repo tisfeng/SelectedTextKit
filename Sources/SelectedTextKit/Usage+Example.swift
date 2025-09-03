@@ -20,7 +20,7 @@ class ModernUsageExample {
             }
 
             // Get selected text by specific method
-            if let text = try await textManager.getSelectedTextByMenuBarActionCopy() {
+            if let text = try await textManager.getSelectedTextByMenuAction() {
                 print("Text from menu copy: \(text)")
             }
 

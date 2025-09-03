@@ -27,7 +27,7 @@ public func getSelectedText() async throws -> String? {
     macOS, deprecated, message: "Use SelectedTextManager.shared.getSelectedTextByAXUI() instead."
 )
 public func getSelectedTextByAXUI() async throws -> String? {
-    return try await SelectedTextManager.shared.getSelectedTextByAXUI()
+    return try await SelectedTextManager.shared.getSelectedTextByAX()
 }
 
 /// Get selected text by menu bar action copy
@@ -38,7 +38,7 @@ public func getSelectedTextByAXUI() async throws -> String? {
 )
 @MainActor
 public func getSelectedTextByMenuBarActionCopy() async throws -> String? {
-    return try await SelectedTextManager.shared.getSelectedTextByMenuBarActionCopy()
+    return try await SelectedTextManager.shared.getSelectedTextByMenuAction()
 }
 
 /// Get selected text by shortcut copy (Cmd+C)
@@ -48,7 +48,7 @@ public func getSelectedTextByMenuBarActionCopy() async throws -> String? {
     message: "Use SelectedTextManager.shared.getSelectedTextByShortcutCopy() instead."
 )
 public func getSelectedTextByShortcutCopy() async -> String? {
-    return await SelectedTextManager.shared.getSelectedTextByShortcutCopy()
+    return await SelectedTextManager.shared.getSelectedTextByShortcut()
 }
 
 // MARK: - Legacy Global Functions (moved to AccessibilityManager)
@@ -56,13 +56,13 @@ public func getSelectedTextByShortcutCopy() async -> String? {
 /// Find the copy item in the frontmost application.
 @available(macOS, deprecated, message: "Use AccessibilityManager().findCopyMenuItem() instead.")
 public func findCopyMenuItem() -> UIElement? {
-    return AccessibilityManager().findCopyMenuItem()
+    return AXManager().findCopyMenuItem()
 }
 
 /// Find the enabled copy item in the frontmost application.
 @available(macOS, deprecated, message: "Use AccessibilityManager().findEnabledCopyItem() instead.")
 public func findEnabledCopyItem() -> UIElement? {
-    return AccessibilityManager().findEnabledCopyItem()
+    return AXManager().findEnabledCopyItem()
 }
 
 // MARK: - Public API for Objective-C compatibility
