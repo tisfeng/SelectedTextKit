@@ -76,5 +76,5 @@ public func findEnabledCopyItem() -> UIElement? {
     message: "Use SelectedTextManager.shared.copyTextAndPaste(_:preservePasteboard:) instead."
 )
 public func copyTextAndPaste(_ text: String, preservePasteboard: Bool = true) async {
-    await SelectedTextManager.shared.copyTextAndPaste(text, preservePasteboard: preservePasteboard)
+    await SelectedTextManager.shared.copyTextAndPaste(text, restorePasteboard: preservePasteboard)
 }

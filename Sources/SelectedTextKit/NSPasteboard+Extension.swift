@@ -24,9 +24,9 @@ extension NSPasteboard {
         await task()
 
         if restoreDelay > 0 {
-            try? await Task.sleep(nanoseconds: UInt64(restoreDelay * 1_000_000_000))
+            await Task.sleep(seconds: restoreDelay)
         }
-        _ = restoreItems(savedItems)
+        restoreItems(savedItems)
     }
 }
 
@@ -81,6 +81,9 @@ extension NSPasteboard {
 
         clearContents()
         let success = writeObjects(pasteboardItems)
+        if !success {
+            logError("Failed to restore pasteboard items")
+        }
 
         return success
     }

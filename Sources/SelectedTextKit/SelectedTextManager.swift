@@ -77,7 +77,7 @@ public final class SelectedTextManager: NSObject {
             return nil
         }
 
-        return await pasteboardManager.getSelectedTextWithAction {
+        return await pasteboardManager.getSelectedText {
             try copyItem.performAction(kAXPressAction)
         }
     }
@@ -93,7 +93,7 @@ public final class SelectedTextManager: NSObject {
             return nil
         }
 
-        return await pasteboardManager.getSelectedTextWithAction {
+        return await pasteboardManager.getSelectedText {
             KeySender.copy()
         }
     }
@@ -103,7 +103,7 @@ public final class SelectedTextManager: NSObject {
     ///   - text: Text to copy and paste
     ///   - preservePasteboard: Whether to preserve original pasteboard content
     @objc
-    public func copyTextAndPaste(_ text: String, preservePasteboard: Bool = true) async {
-        await pasteboardManager.copyTextAndPaste(text, preservePasteboard: preservePasteboard)
+    public func copyTextAndPaste(_ text: String, restorePasteboard: Bool = true) async {
+        await pasteboardManager.pasteText(text, restorePasteboard: restorePasteboard)
     }
 }

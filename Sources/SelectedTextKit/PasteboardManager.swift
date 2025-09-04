@@ -18,25 +18,23 @@ public final class PasteboardManager: NSObject {
     @objc
     public static let shared = PasteboardManager()
 
-    /// Get selected text with a given action
-    /// - Parameter action: Action to execute that should trigger a pasteboard change
+    /// Get selected text after performing an action that triggers a pasteboard change
+    /// - Parameter afterPerform: The action that triggers the pasteboard change
     /// - Returns: Selected text or nil if failed
     @MainActor
-    public func getSelectedTextWithAction(
-        action: @escaping () throws -> Void
-    ) async -> String? {
-        await getNextPasteboardContent(triggeredBy: action)
+    public func getSelectedText(afterPerform action: @escaping () throws -> Void) async -> String? {
+        await fetchPasteboardText(afterPerform: action)
     }
 
     /// Get the next pasteboard content after executing an action
     /// - Parameters:
-    ///   - action: The action that triggers the pasteboard change
-    ///   - preservePasteboard: Whether to preserve the original pasteboard content
+    ///   - restoreOriginal: Whether to preserve the original pasteboard content
+    ///   - afterPerform: The action that triggers the pasteboard change
     /// - Returns: The new pasteboard content if changed, nil if failed or timeout
     @MainActor
-    public func getNextPasteboardContent(
-        triggeredBy action: @escaping () throws -> Void,
-        preservePasteboard: Bool = true
+    public func fetchPasteboardText(
+        restoreOriginal: Bool = true,
+        afterPerform action: @escaping () throws -> Void
     ) async -> String? {
         logInfo("Getting next pasteboard content")
 
@@ -70,7 +68,7 @@ public final class PasteboardManager: NSObject {
             }
         }
 
-        if preservePasteboard {
+        if restoreOriginal {
             await pasteboard.performTemporaryTask(executeAction)
         } else {
             await executeAction()
@@ -79,23 +77,33 @@ public final class PasteboardManager: NSObject {
         return newContent
     }
 
-    /// Copy text and paste it
+    /// Paste given text by copying it to pasteboard and simulating paste action
     /// - Parameters:
     ///   - text: Text to copy and paste
-    ///   - preservePasteboard: Whether to preserve original pasteboard content
-    @objc public func copyTextAndPaste(_ text: String, preservePasteboard: Bool = true) async {
-        logInfo("Starting to copy text and paste it")
+    ///   - restorePasteboard: Whether to restore original pasteboard content
+    @objc public func pasteText(_ text: String, restorePasteboard: Bool = true) async {
+        logInfo("Starting to paste text by copying to pasteboard")
 
-        let newContent = await getNextPasteboardContent(
-            triggeredBy: {
-                text.copyToPasteboard()
-            }, preservePasteboard: preservePasteboard)
+        let pasteboard = NSPasteboard.general
+        var savedItems: [NSPasteboardItem]?
+        if restorePasteboard {
+            savedItems = await pasteboard.backupItems()
+        }
+
+        let newContent = await fetchPasteboardText(restoreOriginal: false) {
+            text.copyToPasteboard()
+        }
 
         if let newContent, !newContent.isEmpty {
             KeySender.paste()
             logInfo("Pasted text: \(newContent)")
         } else {
             logError("Failed to paste text")
+        }
+        
+        if restorePasteboard, let savedItems {
+            await Task.sleep(seconds: 0.05) // Small delay to ensure paste operation is complete
+            await pasteboard.restoreItems(savedItems)
         }
     }
 }
@@ -104,6 +112,10 @@ public final class PasteboardManager: NSObject {
 
 extension String {
     func copyToPasteboard() {
+        guard !self.isEmpty else {
+            return
+        }
+
         let pasteboard = NSPasteboard.general
         pasteboard.clearContents()
         pasteboard.setString(self, forType: .string)
