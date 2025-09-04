@@ -14,18 +14,20 @@ class ModernUsageExample {
 
     func example() async {
         do {
-            // Get selected text using the modern API
+            // Get selected text using multiple fallback methods
             if let selectedText = try await textManager.getSelectedText() {
                 print("Selected text: \(selectedText)")
             }
 
-            // Get selected text by specific method
+            // Get selected text by menu action
             if let text = try await textManager.getSelectedTextByMenuAction() {
                 print("Text from menu copy: \(text)")
             }
 
-            // Copy and paste text
-            await textManager.pasteText("Hello World")
+            // Get selected text by shortcut
+            if let text = try await textManager.getSelectedTextByShortcut() {
+                print("Text from shortcut copy: \(text)")
+            }
 
         } catch {
             print("Error: \(error)")
@@ -47,7 +49,5 @@ class ModernUsageExample {
          NSLog(@"Selected text: %@", text);
      }
  }];
-
- // Copy and paste
- [manager pasteText:@"Hello from Objective-C" restorePasteboard:YES];
+ 
  */

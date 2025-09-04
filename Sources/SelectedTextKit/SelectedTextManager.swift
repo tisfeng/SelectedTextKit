@@ -100,14 +100,4 @@ public final class SelectedTextManager: NSObject {
             KeySender.copy()
         }
     }
-
-    /// Paste given text by copying it to pasteboard and simulating paste action
-    ///
-    /// - Parameters:
-    ///   - text: Text to copy and paste
-    ///   - restorePasteboard: Whether to restore original pasteboard content
-    @objc
-    public func pasteText(_ text: String, restorePasteboard: Bool = true) async {
-        await pasteboardManager.pasteText(text, restorePasteboard: restorePasteboard)
-    }
 }

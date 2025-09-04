@@ -15,12 +15,10 @@ It's a part of [Easydict](https://github.com/tisfeng/Easydict).
 - ✅ **Pasteboard Protection**
   - Backup and restore pasteboard contents
   - Execute temporary tasks without polluting user's pasteboard
-  - Convenient pasteboard string operations
 
 - ✅ **Cross-Language Support**
   - Modern Swift API with async/await
   - Objective-C compatibility
-  - Legacy function support for backward compatibility
 
 - ✅ **Clean Architecture**
   - Manager-based design
@@ -48,24 +46,28 @@ Or add it through Xcode: File → Add Package Dependencies
 ```swift
 import SelectedTextKit
 
-// Modern API using SelectedTextManager
-let textManager = SelectedTextManager.shared
+private let textManager = SelectedTextManager.shared
 
-do {
-    // Get selected text with automatic fallback
-    if let selectedText = try await textManager.getSelectedText() {
-        print("Selected text: \(selectedText)")
+func example() async {
+    do {
+        // Get selected text using multiple fallback methods
+        if let selectedText = try await textManager.getSelectedText() {
+            print("Selected text: \(selectedText)")
+        }
+
+        // Get selected text by menu action
+        if let text = try await textManager.getSelectedTextByMenuAction() {
+            print("Text from menu copy: \(text)")
+        }
+
+        // Get selected text by shortcut
+        if let text = try await textManager.getSelectedTextByShortcut() {
+            print("Text from shortcut copy: \(text)")
+        }
+
+    } catch {
+        print("Error: \(error)")
     }
-    
-    // Use specific methods
-    let axText = try await textManager.getSelectedTextByAXUI()
-    let menuText = try await textManager.getSelectedTextByMenuBarActionCopy()
-    let shortcutText = await textManager.getSelectedTextByShortcutCopy()
-    
-    // Copy and paste with pasteboard protection
-    await textManager.copyTextAndPaste("Hello World", preservePasteboard: true)
-} catch {
-    print("Error: \(error)")
 }
 ```
 
@@ -76,23 +78,9 @@ do {
 Main class for text retrieval operations:
 
 - `getSelectedText()` - Get selected text with automatic fallback
-- `getSelectedTextByAXUI()` - Get text via Accessibility
-- `getSelectedTextByMenuBarActionCopy()` - Get text via menu action
-- `getSelectedTextByShortcutCopy()` - Get text via Cmd+C
-- `copyTextAndPaste(_:preservePasteboard:)` - Copy and paste text
-
-### Pasteboard Utilities
-
-Convenient functions for pasteboard operations:
-
-- `performTemporaryPasteboardTask(_:restoreDelay:)` - Execute task with pasteboard protection
-- `setPasteboardString(_:)` / `getPasteboardString()` - Simple string operations
-- `savePasteboardContents()` / `restorePasteboardContents()` - Manual backup/restore
-
-### NSPasteboard Extensions
-
-- `performTemporaryTask(_:restoreDelay:)` - Protected task execution
-- `backupItems()` / `restoreOriginalContents()` - Content management
+- `getSelectedTextByAX()` - Get text via Accessibility
+- `getSelectedTextByMenuAction()` - Get text via menu bar copy action
+- `getSelectedTextByShortcut()` - Get text via Cmd+C
 
 ## Requirements
 

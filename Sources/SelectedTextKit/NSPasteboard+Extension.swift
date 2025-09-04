@@ -17,16 +17,15 @@ extension NSPasteboard {
     ///   - task: The async task to execute
     @MainActor
     public func performTemporaryTask(
-        restoreInterval: TimeInterval = 0.05,
+        restoreInterval: TimeInterval = 0.0,
         task: @escaping () async -> Void
     ) async {
         let savedItems = backupItems()
 
         await task()
 
-        if restoreInterval > 0 {
-            await Task.sleep(seconds: restoreInterval)
-        }
+        await Task.sleep(seconds: restoreInterval)
+        
         restoreItems(savedItems)
     }
 }

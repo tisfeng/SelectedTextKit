@@ -36,7 +36,7 @@ public final class PasteboardManager: NSObject {
     @MainActor
     public func fetchPasteboardText(
         restoreOriginal: Bool = true,
-        restoreInterval: TimeInterval = 0.05,
+        restoreInterval: TimeInterval = 0.0,
         afterPerform action: @escaping () throws -> Void
     ) async -> String? {
         logInfo("Getting next pasteboard content")
@@ -118,9 +118,6 @@ public final class PasteboardManager: NSObject {
             await Task.sleep(seconds: restoreInterval)
             
             await pasteboard.restoreItems(savedItems)
-            
-            // Small delay to ensure pasteboard is restored before any further operations
-            await Task.sleep(seconds: restoreInterval)
         }
     }
 }
