@@ -25,11 +25,6 @@ public final class AXManager: NSObject {
         return Application(frontmostApp)
     }
 
-    /// Bundle identifier of the frontmost application.
-    var frontmostAppBundleID: String {
-        NSWorkspace.shared.frontmostApplication?.bundleIdentifier ?? ""
-    }
-
     /// Get selected text by AX
     /// - Returns: Selected text or throws AXError
     /// - Important: objc can get AXError value by NSError.code
@@ -88,6 +83,11 @@ public final class AXManager: NSObject {
         logInfo("Found enabled copy item in frontmost application menu")
 
         return copyItem
+    }
+    
+    @objc
+    func hasCopyMenuItem() -> Bool {
+        findCopyMenuItem() != nil
     }
 }
 

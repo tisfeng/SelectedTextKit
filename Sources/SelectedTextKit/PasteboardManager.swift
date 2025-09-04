@@ -84,16 +84,16 @@ public final class PasteboardManager: NSObject {
     ///   - text: Text to copy and paste
     ///   - preservePasteboard: Whether to preserve original pasteboard content
     @objc public func copyTextAndPaste(_ text: String, preservePasteboard: Bool = true) async {
-        logInfo("Copy text and paste text safely")
+        logInfo("Starting to copy text and paste it")
 
         let newContent = await getNextPasteboardContent(
             triggeredBy: {
                 text.copyToPasteboard()
             }, preservePasteboard: preservePasteboard)
 
-        if let text = newContent {
-            KeySender.copy()
-            logInfo("Pasted text: \(text)")
+        if let newContent, !newContent.isEmpty {
+            KeySender.paste()
+            logInfo("Pasted text: \(newContent)")
         } else {
             logError("Failed to paste text")
         }

@@ -72,6 +72,7 @@ extension NSPasteboard {
     /// - Parameter pasteboardItems: Array of pasteboard items to restore
     /// - Returns: True if restoration was successful, false otherwise
     @MainActor
+    @discardableResult
     @objc public func restoreItems(_ pasteboardItems: [NSPasteboardItem]) -> Bool {
         guard !pasteboardItems.isEmpty else {
             logInfo("No pasteboard items to restore")
