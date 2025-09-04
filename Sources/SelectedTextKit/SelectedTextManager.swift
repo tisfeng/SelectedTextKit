@@ -23,6 +23,7 @@ public final class SelectedTextManager: NSObject {
     private let pasteboardManager = PasteboardManager.shared
 
     /// Get selected text using multiple fallback methods
+    /// 
     /// 1. Try AXUI method first
     /// 2. If failed, try menu action copy
     /// - Returns: Selected text or nil if failed
@@ -67,6 +68,7 @@ public final class SelectedTextManager: NSObject {
     }
 
     /// Get selected text by menu bar action copy
+    ///
     /// - Returns: Selected text or nil if failed
     @MainActor
     @objc
@@ -83,6 +85,7 @@ public final class SelectedTextManager: NSObject {
     }
 
     /// Get selected text by shortcut copy (Cmd+C)
+    ///
     /// - Returns: Selected text or nil if failed
     @objc
     public func getSelectedTextByShortcut() async -> String? {
@@ -99,6 +102,7 @@ public final class SelectedTextManager: NSObject {
     }
 
     /// Paste given text by copying it to pasteboard and simulating paste action
+    ///
     /// - Parameters:
     ///   - text: Text to copy and paste
     ///   - restorePasteboard: Whether to restore original pasteboard content

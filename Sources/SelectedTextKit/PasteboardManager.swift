@@ -14,11 +14,11 @@ import KeySender
 @objc(STKPasteboardManager)
 public final class PasteboardManager: NSObject {
 
-    /// Shared singleton instance
     @objc
     public static let shared = PasteboardManager()
 
     /// Get selected text after performing an action that triggers a pasteboard change
+    ///
     /// - Parameter afterPerform: The action that triggers the pasteboard change
     /// - Returns: Selected text or nil if failed
     @MainActor
@@ -27,13 +27,16 @@ public final class PasteboardManager: NSObject {
     }
 
     /// Get the next pasteboard content after executing an action
+    ///
     /// - Parameters:
     ///   - restoreOriginal: Whether to preserve the original pasteboard content
+    ///   - restoreInterval: Delay before restoring original content
     ///   - afterPerform: The action that triggers the pasteboard change
     /// - Returns: The new pasteboard content if changed, nil if failed or timeout
     @MainActor
     public func fetchPasteboardText(
         restoreOriginal: Bool = true,
+        restoreInterval: TimeInterval = 0.05,
         afterPerform action: @escaping () throws -> Void
     ) async -> String? {
         logInfo("Getting next pasteboard content")
@@ -69,7 +72,7 @@ public final class PasteboardManager: NSObject {
         }
 
         if restoreOriginal {
-            await pasteboard.performTemporaryTask(executeAction)
+            await pasteboard.performTemporaryTask(restoreInterval: restoreInterval, task: executeAction)
         } else {
             await executeAction()
         }
@@ -78,10 +81,15 @@ public final class PasteboardManager: NSObject {
     }
 
     /// Paste given text by copying it to pasteboard and simulating paste action
+    ///
     /// - Parameters:
     ///   - text: Text to copy and paste
     ///   - restorePasteboard: Whether to restore original pasteboard content
-    @objc public func pasteText(_ text: String, restorePasteboard: Bool = true) async {
+    ///   - restoreInterval: Delay after restoring pasteboard
+    @objc public func pasteText(
+        _ text: String,
+        restorePasteboard: Bool = true,
+        restoreInterval: TimeInterval = 0.05) async {
         logInfo("Starting to paste text by copying to pasteboard")
 
         let pasteboard = NSPasteboard.general
@@ -90,9 +98,13 @@ public final class PasteboardManager: NSObject {
             savedItems = await pasteboard.backupItems()
         }
 
+        let startTime = CFAbsoluteTimeGetCurrent()
+
+        // Do not restore original content here, we need to paste the new content first
         let newContent = await fetchPasteboardText(restoreOriginal: false) {
             text.copyToPasteboard()
         }
+        logInfo("Time taken to copy text to pasteboard: \(startTime.elapsedTimeString) seconds")
 
         if let newContent, !newContent.isEmpty {
             KeySender.paste()
@@ -102,8 +114,13 @@ public final class PasteboardManager: NSObject {
         }
         
         if restorePasteboard, let savedItems {
-            await Task.sleep(seconds: 0.05) // Small delay to ensure paste operation is complete
+            // Small delay to ensure paste operation is done
+            await Task.sleep(seconds: restoreInterval)
+            
             await pasteboard.restoreItems(savedItems)
+            
+            // Small delay to ensure pasteboard is restored before any further operations
+            await Task.sleep(seconds: restoreInterval)
         }
     }
 }
@@ -119,5 +136,13 @@ extension String {
         let pasteboard = NSPasteboard.general
         pasteboard.clearContents()
         pasteboard.setString(self, forType: .string)
+    }
+}
+
+extension CFAbsoluteTime {
+    /// Returns a string representing the elapsed time since this CFAbsoluteTime value.
+    var elapsedTimeString: String {
+        let elapsedTime = CFAbsoluteTimeGetCurrent() - self
+        return String(format: "%.4f", elapsedTime)
     }
 }

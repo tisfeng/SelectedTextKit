@@ -13,13 +13,28 @@ import os.log
 
 let logger = Logger(subsystem: "com.izual.SelectedTextKit", category: "main")
 
+let dateFormatter = DateFormatter()
+
 func logInfo(_ message: String) {
-    logger.info("\(message)")
+    logger.info("[\(logTimestamp)] \(message)")
 }
 
 func logError(_ message: String) {
-    logger.error("\(message)")
+    logger.error("[\(logTimestamp)] \(message)")
 }
+
+/// Generate high precision timestamp with microseconds
+var logTimestamp: String  {
+    let now = Date()
+    let timeInterval = now.timeIntervalSince1970
+    let microseconds = Int((timeInterval.truncatingRemainder(dividingBy: 1)) * 1_000_000)
+
+    dateFormatter.dateFormat = "yyyy-MM-dd HH:mm:ss" // "yyyy-MM-dd HH:mm:ss.SSS"
+    let dateString = dateFormatter.string(from: now)
+
+    return String(format: "%@.%06d", dateString, microseconds)
+}
+
 
 /// Poll task, if task is true, return true, else continue polling.
 @discardableResult
@@ -41,21 +56,21 @@ public func pollTask(
 
 // MARK: - KeySender Extensions
 
-public extension KeySender {
+extension KeySender {
     /// Copy (Cmd+C)
-    static func copy() {
+    public static func copy() {
         let sender = KeySender(key: .c, modifiers: .command)
         sender.sendGlobally()
     }
 
     /// Paste (Cmd+V)
-    static func paste() {
+    public static func paste() {
         let sender = KeySender(key: .v, modifiers: .command)
         sender.sendGlobally()
     }
 
     /// Select All (Cmd+A)
-    static func selectAll() {
+    public static func selectAll() {
         let sender = KeySender(key: .a, modifiers: .command)
         sender.sendGlobally()
     }

@@ -11,20 +11,21 @@ import AppKit
 extension NSPasteboard {
     /// Protect the pasteboard items from being changed by temporary tasks.
     /// This method will backup current pasteboard contents, execute the task, and then restore the original contents.
+    ///
     /// - Parameters:
+    ///   - restoreInterval: Delay before restoring contents
     ///   - task: The async task to execute
-    ///   - restoreDelay: Optional delay before restoring contents (default: 0)
     @MainActor
     public func performTemporaryTask(
-        _ task: @escaping () async -> Void,
-        restoreDelay: TimeInterval = 0
+        restoreInterval: TimeInterval = 0.05,
+        task: @escaping () async -> Void
     ) async {
         let savedItems = backupItems()
 
         await task()
 
-        if restoreDelay > 0 {
-            await Task.sleep(seconds: restoreDelay)
+        if restoreInterval > 0 {
+            await Task.sleep(seconds: restoreInterval)
         }
         restoreItems(savedItems)
     }

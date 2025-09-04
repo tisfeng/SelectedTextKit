@@ -18,6 +18,7 @@ public final class AXManager: NSObject {
     public static let shared = AXManager()
 
     /// Get selected text by AX
+    ///
     /// - Returns: Selected text or throws AXError
     /// - Important: objc can get AXError value by NSError.code
     @objc
@@ -47,6 +48,7 @@ public final class AXManager: NSObject {
     }
 
     /// Find the copy item in the frontmost application
+    /// 
     /// - Returns: UIElement for copy menu item or nil if not found
     public func findCopyMenuItem() -> UIElement? {
         guard checkIsProcessTrusted(prompt: true) else {
