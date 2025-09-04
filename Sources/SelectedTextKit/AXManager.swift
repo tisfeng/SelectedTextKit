@@ -14,21 +14,14 @@ import Foundation
 @objc(STKAXManager)
 public final class AXManager: NSObject {
 
-    @objc public static let shared = AXManager()
-
-    /// A `UIElement` for frontmost application.
-    var frontmostAppElement: UIElement? {
-        let frontmostApp = NSWorkspace.shared.frontmostApplication
-        guard let frontmostApp else {
-            return nil
-        }
-        return Application(frontmostApp)
-    }
+    @objc
+    public static let shared = AXManager()
 
     /// Get selected text by AX
     /// - Returns: Selected text or throws AXError
     /// - Important: objc can get AXError value by NSError.code
-    @objc public func getSelectedTextByAX() async throws -> String? {
+    @objc
+    public func getSelectedTextByAX() async throws -> String? {
         logInfo("Getting selected text via AX")
 
         // Get frontmost application element
@@ -86,8 +79,19 @@ public final class AXManager: NSObject {
     }
     
     @objc
-    func hasCopyMenuItem() -> Bool {
+    public func hasCopyMenuItem() -> Bool {
         findCopyMenuItem() != nil
+    }
+    
+    // MARK: - Private Properties
+    
+    /// A `UIElement` for frontmost application.
+    private var frontmostAppElement: UIElement? {
+        let frontmostApp = NSWorkspace.shared.frontmostApplication
+        guard let frontmostApp else {
+            return nil
+        }
+        return Application(frontmostApp)
     }
 }
 

@@ -98,12 +98,12 @@ public final class SelectedTextManager: NSObject {
         }
     }
 
-    /// Copy text and paste it
+    /// Paste given text by copying it to pasteboard and simulating paste action
     /// - Parameters:
     ///   - text: Text to copy and paste
-    ///   - preservePasteboard: Whether to preserve original pasteboard content
+    ///   - restorePasteboard: Whether to restore original pasteboard content
     @objc
-    public func copyTextAndPaste(_ text: String, restorePasteboard: Bool = true) async {
+    public func pasteText(_ text: String, restorePasteboard: Bool = true) async {
         await pasteboardManager.pasteText(text, restorePasteboard: restorePasteboard)
     }
 }

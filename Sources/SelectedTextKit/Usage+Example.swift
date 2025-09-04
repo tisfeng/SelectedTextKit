@@ -25,26 +25,7 @@ class ModernUsageExample {
             }
 
             // Copy and paste text
-            await textManager.copyTextAndPaste("Hello World")
-
-        } catch {
-            print("Error: \(error)")
-        }
-    }
-}
-
-// MARK: - Legacy API Usage (For backward compatibility)
-
-class LegacyUsageExample {
-    func example() async {
-        do {
-            // Legacy global functions still work
-            if let selectedText = try await getSelectedText() {
-                print("Selected text (legacy): \(selectedText)")
-            }
-
-            // Copy and paste using legacy function
-            await copyTextAndPaste("Hello World Legacy")
+            await textManager.pasteText("Hello World")
 
         } catch {
             print("Error: \(error)")
@@ -68,5 +49,5 @@ class LegacyUsageExample {
  }];
 
  // Copy and paste
- [manager copyTextAndPaste:@"Hello from Objective-C" preservePasteboard:YES];
+ [manager pasteText:@"Hello from Objective-C" restorePasteboard:YES];
  */
