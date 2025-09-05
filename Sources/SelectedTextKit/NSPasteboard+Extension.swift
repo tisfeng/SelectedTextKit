@@ -7,6 +7,7 @@
 //
 
 import AppKit
+import AXSwiftExtension
 
 extension NSPasteboard {
     /// Protect the pasteboard items from being changed by temporary tasks.

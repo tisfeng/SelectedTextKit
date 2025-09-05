@@ -6,8 +6,8 @@
 //  Copyright © 2024 izual. All rights reserved.
 //
 
+import AXSwiftExtension
 import AppKit
-import Foundation
 import KeySender
 
 /// Manager class for pasteboard-related operations
@@ -45,7 +45,7 @@ public final class PasteboardManager: NSObject {
         let initialChangeCount = pasteboard.changeCount
         var newContent: String?
 
-        let executeAction = { @MainActor in
+        let executeAction = { [self] in
             do {
                 logInfo("Executing trigger action")
                 try action()
@@ -54,7 +54,7 @@ public final class PasteboardManager: NSObject {
                 return
             }
 
-            await pollTask { @MainActor in
+            await pollTask {
                 // Check if the pasteboard content has changed
                 if pasteboard.changeCount != initialChangeCount {
                     // !!!: The pasteboard content may be nil or other strange content(such as old content) if the pasteboard is changing by other applications in the same time, like PopClip.
@@ -72,30 +72,68 @@ public final class PasteboardManager: NSObject {
         }
 
         if restoreOriginal {
-            await pasteboard.performTemporaryTask(restoreInterval: restoreInterval, task: executeAction)
+            await pasteboard.performTemporaryTask(
+                restoreInterval: restoreInterval, task: executeAction)
         } else {
             await executeAction()
         }
 
         return newContent
     }
+    
+    // MARK: - Paste Methods
 
-    /// Paste given text by copying it to pasteboard and simulating paste action
+    /// Paste text by menu action first, if failed, fallback to keyboard shortcut paste.
     ///
     /// - Parameters:
     ///   - text: Text to copy and paste
     ///   - restorePasteboard: Whether to restore original pasteboard content
     ///   - restoreInterval: Delay after restoring pasteboard
+    @MainActor
     @objc public func pasteText(
         _ text: String,
         restorePasteboard: Bool = true,
-        restoreInterval: TimeInterval = 0.05) async {
-        logInfo("Starting to paste text by copying to pasteboard")
+        restoreInterval: TimeInterval = 0.05
+    ) async {
+        let success = await performPasteOperation(
+            text: text,
+            type: .menuAction,
+            restorePasteboard: restorePasteboard,
+            restoreInterval: restoreInterval
+        )
+        
+        if !success {
+            logInfo("Falling back to keyboard shortcut paste")
+            _ = await performPasteOperation(
+                text: text,
+                type: .keyboardShortcut,
+                restorePasteboard: restorePasteboard,
+                restoreInterval: restoreInterval
+            )
+        }
+    }
+
+    /// Common paste operation logic
+    /// - Parameters:
+    ///   - text: Text to copy and paste
+    ///   - type: The paste type to use
+    ///   - restorePasteboard: Whether to restore original pasteboard content
+    ///   - restoreInterval: Delay after restoring pasteboard
+    /// - Returns: Success status of the paste operation
+    @MainActor
+    @discardableResult
+    private func performPasteOperation(
+        text: String,
+        type: PasteType,
+        restorePasteboard: Bool,
+        restoreInterval: TimeInterval
+    ) async -> Bool {
+        logInfo("Starting to paste text by \(type.rawValue)")
 
         let pasteboard = NSPasteboard.general
         var savedItems: [NSPasteboardItem]?
         if restorePasteboard {
-            savedItems = await pasteboard.backupItems()
+            savedItems = pasteboard.backupItems()
         }
 
         let startTime = CFAbsoluteTimeGetCurrent()
@@ -106,20 +144,76 @@ public final class PasteboardManager: NSObject {
         }
         logInfo("Time taken to copy text to pasteboard: \(startTime.elapsedTimeString) seconds")
 
+        var success = false
         if let newContent, !newContent.isEmpty {
-            KeySender.paste()
-            logInfo("Pasted text: \(newContent)")
+            success = await performPasteAction(type: type, content: newContent)
         } else {
-            logError("Failed to paste text")
+            logError("Failed to copy text to pasteboard")
         }
-        
+
         if restorePasteboard, let savedItems {
             // Small delay to ensure paste operation is done
             await Task.sleep(seconds: restoreInterval)
-            
-            await pasteboard.restoreItems(savedItems)
+
+            pasteboard.restoreItems(savedItems)
+        }
+
+        return success
+    }
+
+    /// Perform the actual paste action based on the type
+    /// - Parameters:
+    ///   - type: The paste type to use
+    ///   - content: The content being pasted
+    /// - Returns: Success status of the paste operation
+    @MainActor
+    private func performPasteAction(type: PasteType, content: String) async -> Bool {
+        switch type {
+        case .keyboardShortcut:
+            KeySender.paste()
+            logInfo("Pasted text via keyboard shortcut: \(content)")
+            return true
+
+        case .menuAction:
+            do {
+                let axManager = AXManager.shared
+                let pasteItem = try axManager.findEnabledPasteItem()
+                try pasteItem.performAction(kAXPressAction)
+                logInfo("Pasted text via menu action: \(content)")
+                return true
+            } catch {
+                logError("Failed to paste via menu action: \(error)")
+                return false
+            }
         }
     }
+    
+    /// Types of paste actions
+    public enum PasteType: String, CaseIterable {
+        case keyboardShortcut
+        case menuAction
+    }
+    
+    // MARK: - Polling Utility
+
+    /// Poll task, if task is true, return true, else continue polling.
+    @discardableResult
+    public func pollTask(
+        _ task: @escaping () async -> Bool,
+        every interval: TimeInterval = 0.005,
+        timeout: TimeInterval = 0.1
+    ) async -> Bool {
+        let startTime = Date()
+        while Date().timeIntervalSince(startTime) < timeout {
+            if await task() {
+                return true
+            }
+            await Task.sleep(seconds: interval)
+        }
+        logInfo("pollTask timeout")
+        return false
+    }
+
 }
 
 // MARK: - String + Pasteboard
@@ -136,10 +230,39 @@ extension String {
     }
 }
 
+// MARK: - CFAbsoluteTime Extensions
+
 extension CFAbsoluteTime {
     /// Returns a string representing the elapsed time since this CFAbsoluteTime value.
     var elapsedTimeString: String {
         let elapsedTime = CFAbsoluteTimeGetCurrent() - self
         return String(format: "%.4f", elapsedTime)
     }
+}
+
+// MARK: - Task Extensions
+
+extension Task where Success == Never, Failure == Never {
+    /// Sleep for given seconds within a Task
+    static func sleep(seconds: TimeInterval) async {
+        try? await Task.sleepThrowing(seconds: seconds)
+    }
+
+    /// Sleep for given seconds within a Task, throwing an error if cancelled
+    static func sleepThrowing(seconds: TimeInterval) async throws {
+        try await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000))
+    }
+}
+
+// MARK: - Measure Execution Time
+
+func measureTime(block: () -> Void) {
+    let startTime = DispatchTime.now()
+    block()
+    let endTime = DispatchTime.now()
+
+    let nanoseconds = endTime.uptimeNanoseconds - startTime.uptimeNanoseconds
+    let milliseconds = Double(nanoseconds) / 1_000_000
+
+    print("Execution time: \(milliseconds) ms")
 }

@@ -7,7 +7,7 @@ let package = Package(
     name: "SelectedTextKit",
     platforms: [
         .macOS(.v11),
-        .macCatalyst(.v14)
+        .macCatalyst(.v14),
     ],
     products: [
         // Products define the executables and libraries a package produces, making them visible to other packages.
@@ -17,7 +17,6 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/tmandry/AXSwift.git", from: "0.3.0"),
-        .package(url: "https://github.com/s1ntoneli/AXSwiftExt", from: "0.1.0"),
         .package(url: "https://github.com/jordanbaird/KeySender", from: "0.0.5"),
     ],
     targets: [
@@ -27,8 +26,14 @@ let package = Package(
             name: "SelectedTextKit",
             dependencies: [
                 "AXSwift",
-                "AXSwiftExt",
                 "KeySender",
+                "AXSwiftExtension",
+            ]
+        ),
+        .target(
+            name: "AXSwiftExtension",
+            dependencies: [
+                "AXSwift"
             ]
         ),
         .target(
