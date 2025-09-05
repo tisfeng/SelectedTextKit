@@ -177,7 +177,7 @@ public final class PasteboardManager: NSObject {
         case .menuAction:
             do {
                 let axManager = AXManager.shared
-                let pasteItem = try axManager.findEnabledPasteItem()
+                let pasteItem = try axManager.findEnabledMenuItem(.paste)
                 try pasteItem.performAction(kAXPressAction)
                 logInfo("Pasted text via menu action: \(content)")
                 return true

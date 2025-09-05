@@ -42,7 +42,7 @@ public enum SystemMenuItem: String, CaseIterable {
 
     /// Check if the given title matches this menu item type
     public func matchesTitle(_ title: String?) -> Bool {
-        guard let title = title else { return false }
+        guard let title else { return false }
         return localizedTitles.contains(title)
     }
 }

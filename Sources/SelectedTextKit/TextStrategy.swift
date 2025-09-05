@@ -11,7 +11,7 @@ import Foundation
 
 /// Text retrieval strategies
 @objc(EZTextStrategy)
-public enum TextStrategy: Int, CaseIterable {
+public enum TextStrategy: Int, CaseIterable, CustomStringConvertible {
     case auto = 0
     case accessibility = 1
     case appleScript = 2
@@ -36,6 +36,6 @@ public enum TextStrategy: Int, CaseIterable {
     }
 }
 
-// MARK: - TextStrategy
+// MARK: - TextStrategySet
 
 public typealias TextStrategySet = Set<TextStrategy>

@@ -140,7 +140,7 @@ struct ContentView: View {
                 errorMessage = "Failed to get selected text: \(error.localizedDescription)"
             }
             
-            isLoading = false
+            isLoading = false            
         }
     }
     

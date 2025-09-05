@@ -11,18 +11,13 @@ import AppKit
 import Foundation
 
 extension AXManager {
-    /// Find the copy item in the frontmost application
-    ///
-    /// - Returns: UIElement for copy menu item or throws AXError if not found
-    public func findCopyMenuItem() throws -> UIElement {
-        return try findMenuItem(.copy)
-    }
-
-    /// Find the paste item in the frontmost application
-    ///
-    /// - Returns: UIElement for paste menu item or throws AXError if not found
-    public func findPasteMenuItem() throws -> UIElement {
-        return try findMenuItem(.paste)
+    // MARK - Find Menu Item
+    
+    /// Find the enabled menu item in the frontmost application
+    /// - Parameter menuItem: The type of menu item to find
+    /// - Returns: UIElement for enabled menu item or throws AXError if not found or disabled
+    public func findEnabledMenuItem(_ menuItem: SystemMenuItem) throws -> UIElement {
+        return try findMenuItem(menuItem, requireEnabled: true)
     }
 
     /// Find a specific menu item in the frontmost application
@@ -59,33 +54,17 @@ extension AXManager {
 
         return foundMenuItem
     }
-    /// Find the enabled copy item in the frontmost application
-    /// - Returns: UIElement for enabled copy menu item or throws AXError if not found or disabled
-    public func findEnabledCopyItem() throws -> UIElement {
-        return try findMenuItem(.copy, requireEnabled: true)
-    }
-
-    /// Find the enabled paste item in the frontmost application
-    /// - Returns: UIElement for enabled paste menu item or throws AXError if not found or disabled
-    public func findEnabledPasteItem() throws -> UIElement {
-        return try findMenuItem(.paste, requireEnabled: true)
-    }
-
-    /// Find the enabled menu item in the frontmost application
-    /// - Parameter menuItem: The type of menu item to find
-    /// - Returns: UIElement for enabled menu item or throws AXError if not found or disabled
-    public func findEnabledMenuItem(_ menuItem: SystemMenuItem) throws -> UIElement {
-        return try findMenuItem(menuItem, requireEnabled: true)
-    }
+    
+    // MARK: - Check Menu Item Existence
 
     @objc
     public func hasCopyMenuItem() -> Bool {
-        (try? findCopyMenuItem()) != nil
+        (try? findMenuItem(.copy)) != nil
     }
 
     @objc
     public func hasPasteMenuItem() -> Bool {
-        (try? findPasteMenuItem()) != nil
+        (try? findMenuItem(.paste)) != nil
     }
 
     // MARK: - Frontmost Application

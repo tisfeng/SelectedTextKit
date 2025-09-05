@@ -52,8 +52,7 @@ public final class SelectedTextManager: NSObject {
     /// - Returns: Selected text or nil if all strategies fail
     public func getSelectedText(strategies: TextStrategySet) async throws -> String? {
         logInfo(
-            "Attempting to get selected text using strategies: \(strategies.map(\.description).joined(separator: ", "))"
-        )
+            "Attempting to get selected text using strategies: \(strategies)")
 
         for strategy in strategies {
             do {
@@ -94,7 +93,7 @@ public final class SelectedTextManager: NSObject {
                 logInfo("Accessibility returned empty text")
             }
         }
-        
+
         do {
             // If Accessibility fails or returns empty text, try menu action copy
             if let menuCopyText = try await getSelectedTextByMenuAction() {
@@ -107,7 +106,7 @@ public final class SelectedTextManager: NSObject {
             }
         } catch {
             logError("Failed to get text via menu action copy: \(error)")
-            
+
             let axError = error as? AXError
             if axError == .apiDisabled {
                 logInfo("Accessibility API is disabled, returning nil")
@@ -122,11 +121,10 @@ public final class SelectedTextManager: NSObject {
                 throw error
             }
         }
-        
+
         logError("All auto strategy methods failed or returned empty text")
         return nil
     }
-
 
     /// Get selected text by AXUI
     ///
@@ -142,10 +140,10 @@ public final class SelectedTextManager: NSObject {
     private func getSelectedTextByMenuAction() async throws -> String? {
         logInfo("Getting selected text by menu bar action copy")
 
-        let copyItem = try axManager.findEnabledCopyItem()
+        let copyItem = try axManager.findEnabledMenuItem(.copy)
 
         return await pasteboardManager.getSelectedText {
-            try copyItem.performAction(kAXPressAction)
+            try copyItem.performAction(.press)
         }
     }
 

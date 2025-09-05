@@ -114,8 +114,9 @@ extension UIElement {
 
                 // Check by title and shortcut character as fallback
                 if let shortcutChar = menuItemType.shortcutChar,
-                    try element.cmdChar() == shortcutChar,
-                    isMenuTitleMatching(try element.title(), for: menuItemType)
+                   try element.cmdChar() == shortcutChar,
+                   let title = try element.title(),
+                    isMenuTitleMatching(title, for: menuItemType)
                 {
                     logInfo(
                         "Found \(menuItemType) title item in menu: \(try element.title()!), identifier: \(identifier)"
