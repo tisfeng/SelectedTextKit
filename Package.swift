@@ -6,8 +6,8 @@ import PackageDescription
 let package = Package(
     name: "SelectedTextKit",
     platforms: [
-        .macOS(.v11),
-        .macCatalyst(.v14),
+        .macOS(.v13),
+        .macCatalyst(.v16),
     ],
     products: [
         // Products define the executables and libraries a package produces, making them visible to other packages.
@@ -18,6 +18,7 @@ let package = Package(
     dependencies: [
         .package(url: "https://github.com/tmandry/AXSwift.git", from: "0.3.0"),
         .package(url: "https://github.com/jordanbaird/KeySender", from: "0.0.5"),
+        .package(url: "https://github.com/swiftlang/swift-subprocess.git", branch: "main")
     ],
     targets: [
         // Targets are the basic building blocks of a package, defining a module or a test suite.
@@ -28,6 +29,7 @@ let package = Package(
                 "AXSwift",
                 "KeySender",
                 "AXSwiftExtension",
+                .product(name: "Subprocess", package: "swift-subprocess")
             ]
         ),
         .target(

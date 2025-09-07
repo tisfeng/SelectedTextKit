@@ -17,6 +17,24 @@
         "revision" : "99584bf1a03ab600cc44be89a2dcd98b2dbeb9de",
         "version" : "0.0.5"
       }
+    },
+    {
+      "identity" : "swift-subprocess",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/swiftlang/swift-subprocess.git",
+      "state" : {
+        "branch" : "main",
+        "revision" : "44be5d56aa4b26dc2003a67c0288a6a68366a87d"
+      }
+    },
+    {
+      "identity" : "swift-system",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/apple/swift-system",
+      "state" : {
+        "revision" : "61e4ca4b81b9e09e2ec863b00c340eb13497dac6",
+        "version" : "1.5.0"
+      }
     }
   ],
   "version" : 2
