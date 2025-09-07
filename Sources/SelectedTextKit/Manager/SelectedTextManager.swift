@@ -21,6 +21,7 @@ public final class SelectedTextManager: NSObject {
 
     private let axManager = AXManager.shared
     private let pasteboardManager = PasteboardManager.shared
+    private let appleScriptManager = AppleScriptManager.shared
 
     /// Get selected text using specified strategy
     ///
@@ -37,8 +38,7 @@ public final class SelectedTextManager: NSObject {
         case .accessibility:
             return try await getSelectedTextByAX()
         case .appleScript:
-            logError("AppleScript strategy not implemented yet")
-            return nil
+            return try await getSelectedTextByAppleScript()
         case .menuAction:
             return try await getSelectedTextByMenuAction()
         case .shortcut:
@@ -50,9 +50,12 @@ public final class SelectedTextManager: NSObject {
     ///
     /// - Parameter strategies: Set of strategies to try in order
     /// - Returns: Selected text or nil if all strategies fail
+    /// - Throws: SelectedTextKitError if operation fails due to system issues
     public func getSelectedText(strategies: TextStrategySet) async throws -> String? {
         logInfo(
             "Attempting to get selected text using strategies: \(strategies)")
+
+        var lastError: SelectedTextKitError?
 
         for strategy in strategies {
             do {
@@ -64,13 +67,29 @@ public final class SelectedTextManager: NSObject {
                         logInfo("\(strategy.description) returned empty text, trying next strategy")
                     }
                 }
+            } catch let error as SelectedTextKitError {
+                logError("Failed to get text via \(strategy.description): \(error.localizedDescription)")
+                lastError = error
+                
+                // Don't continue trying other strategies for certain critical errors
+                if case .accessibilityPermissionDenied = error {
+                    throw error
+                }
+                continue
             } catch {
                 logError("Failed to get text via \(strategy.description): \(error)")
+                lastError = .systemError(underlying: error)
                 continue
             }
         }
 
         logError("All strategies failed to get selected text")
+        
+        // If we have a specific error from the last attempt, throw it
+        if let lastError = lastError {
+            throw lastError
+        }
+        
         return nil
     }
 
@@ -161,5 +180,24 @@ public final class SelectedTextManager: NSObject {
         return await pasteboardManager.getSelectedText {
             KeySender.copy()
         }
+    }
+    
+    /// Get selected text by AppleScript
+    ///
+    /// - Returns: Selected text or nil if failed
+    /// - Throws: SelectedTextKitError if browser is not supported or other issues occur
+    private func getSelectedTextByAppleScript() async throws -> String? {
+        logInfo("Getting selected text by AppleScript")
+        
+        guard let frontmostApp = NSWorkspace.shared.frontmostApplication,
+              let bundleID = frontmostApp.bundleIdentifier else {
+            throw SelectedTextKitError.browserNotFound
+        }
+        
+        guard appleScriptManager.isBrowserSupportingAppleScript(bundleID) else {
+            throw SelectedTextKitError.unsupportedBrowser(bundleID: bundleID)
+        }
+        
+        return try await appleScriptManager.getSelectedTextFromBrowser(bundleID)
     }
 }
