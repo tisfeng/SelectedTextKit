@@ -17,16 +17,26 @@ extension AppleScriptManager {
     /// - Returns: Result of the operation
     /// - Throws: Any error from the operation or volume management
     public func withMutedAlertVolume<T>(_ operation: () async throws -> T) async throws -> T {
+        logInfo("Muting alert volume for operation")
+        
         // Save current volume and mute in one operation
         let originalVolume = try await muteAlertVolume()
+        logInfo("Original alert volume: \(originalVolume)")
 
         do {
             // Execute the operation
             let result = try await operation()
+            logInfo("Operation completed, restoring alert volume to \(originalVolume)")
 
-            // Restore original volume
-            try await setAlertVolume(originalVolume)
+            Task {
+                // Wait a moment to ensure any alert sound has finished
+                await Task.sleep(seconds: 1.0)
+                
 
+                // Restore original volume
+                try await setAlertVolume(originalVolume)
+                logInfo("Alert volume restored to \(originalVolume)")
+            }
             return result
         } catch {
             // Ensure we restore volume even if operation fails
@@ -88,7 +98,7 @@ extension AppleScriptManager {
     ///
     /// - Parameter commands: The commands to execute within System Events
     /// - Returns: Complete AppleScript string
-    private func systemEventsScript(_ commands: String) -> String {
+    public func systemEventsScript(_ commands: String) -> String {
         return """
             tell application "System Events"
                 \(commands)
