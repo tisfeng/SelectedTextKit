@@ -181,8 +181,11 @@ public final class SelectedTextManager: NSObject {
             throw AXError.apiDisabled
         }
 
-        return await pasteboardManager.getSelectedText {
-            KeySender.copy()
+        // Execute copy operation with muted alert volume to prevent system beep on empty selection
+        return try await AppleScriptManager.shared.withMutedAlertVolume {
+            return await pasteboardManager.getSelectedText {
+                KeySender.copy()
+            }
         }
     }
 

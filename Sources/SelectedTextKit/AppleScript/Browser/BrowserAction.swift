@@ -89,7 +89,7 @@ public enum BrowserAction {
     public var defaultTimeout: TimeInterval {
         switch self {
         case .getCurrentTabURL, .getSelectedText, .getTextFieldText, .insertText, .selectAllInputText:
-            return 0.2
+            return 0.5
         case .custom(_, let timeout, _):
             return timeout ?? 5.0
         }

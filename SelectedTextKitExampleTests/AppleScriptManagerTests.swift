@@ -103,7 +103,7 @@ struct AppleScriptManagerTests {
         let scriptError = SelectedTextKitError.appleScriptExecution(
             script: "test script",
             exitCode: 1,
-            output: "error output"
+            description: "error output"
         )
         #expect(
             scriptError.isAppleScriptError, "Script error should be identified as AppleScript error"

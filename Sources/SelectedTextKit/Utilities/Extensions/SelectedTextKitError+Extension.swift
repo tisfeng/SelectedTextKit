@@ -132,8 +132,8 @@ extension SelectedTextKitError {
         case 1002:
             let script = nsError.userInfo["script"] as? String ?? ""
             let exitCode = nsError.userInfo["exitCode"] as? Int ?? -1
-            let output = nsError.userInfo["output"] as? String
-            return .appleScriptExecution(script: script, exitCode: exitCode, output: output)
+            let description = nsError.userInfo["description"] as? String
+            return .appleScriptExecution(script: script, exitCode: exitCode, description: description)
         case 1003:
             let bundleID = nsError.userInfo["bundleID"] as? String ?? ""
             return .unsupportedBrowser(bundleID: bundleID)

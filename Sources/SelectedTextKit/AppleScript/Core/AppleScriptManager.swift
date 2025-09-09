@@ -21,6 +21,9 @@ public final class AppleScriptManager {
     ///   - script: The AppleScript source code to execute.
     ///   - timeout: Timeout in seconds. Default is 5.0.
     /// - Returns: The output string if successful, or throws an error.
+    ///
+    /// - Note: `NSAppleScript` is a better ans simpler way to run AppleScript in macOS.
+    ///   Just want to learn how to use `swift-subprocess` here.
     public func runAppleScript(_ script: String, timeout: TimeInterval = 5.0) async throws
         -> String?
     {
@@ -36,11 +39,12 @@ public final class AppleScriptManager {
                 let trimmedOutput = result.standardOutput?.trimmingCharacters(
                     in: .whitespacesAndNewlines)
 
-                if !result.terminationStatus.isSuccess {
+                let terminationStatus = result.terminationStatus
+                if !terminationStatus.isSuccess {
                     throw SelectedTextKitError.appleScriptExecution(
                         script: script,
-                        exitCode: Int(result.terminationStatus.exitCode ?? -1),
-                        output: trimmedOutput
+                        exitCode: Int(terminationStatus.exitCode ?? 1),
+                        description: trimmedOutput
                     )
                 }
 
@@ -61,10 +65,8 @@ public final class AppleScriptManager {
     /// - Parameter scriptInfo: The script information containing script, timeout, and metadata.
     /// - Returns: The output string if successful, or throws an error.
     public func runAppleScript(_ scriptInfo: ScriptInfo) async throws -> String? {
-        let timeout = scriptInfo.timeout ?? 5.0
-
         do {
-            let result = try await runAppleScript(scriptInfo.script, timeout: timeout)
+            let result = try await runAppleScript(scriptInfo.script, timeout: scriptInfo.timeout)
 
             // Log execution with script name
             logInfo("Executed script '\(scriptInfo.name)': \(result ?? "no output")")

@@ -11,13 +11,13 @@ import Foundation
 public struct ScriptInfo {
     public let name: String
     public let script: String
-    public let timeout: TimeInterval?
+    public let timeout: TimeInterval
     public let description: String?
 
     public init(
         name: String,
         script: String,
-        timeout: TimeInterval? = nil,
+        timeout: TimeInterval = 5.0,
         description: String? = nil
     ) {
         self.name = name

@@ -12,7 +12,7 @@ import Foundation
 /// Unified error type for SelectedTextKit operations
 public enum SelectedTextKitError: Error, LocalizedError, CustomNSError {
     case timeout(operation: String, duration: TimeInterval)
-    case appleScriptExecution(script: String, exitCode: Int, output: String?)
+    case appleScriptExecution(script: String, exitCode: Int? = 1, description: String? = nil)
     case unsupportedBrowser(bundleID: String)
     case browserNotFound
     case accessibilityPermissionDenied
