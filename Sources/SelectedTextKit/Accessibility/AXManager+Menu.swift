@@ -6,7 +6,6 @@
 //
 
 import AXSwift
-import AXSwiftExtension
 import AppKit
 import Foundation
 

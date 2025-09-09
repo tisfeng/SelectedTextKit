@@ -7,7 +7,6 @@
 //
 
 import AXSwift
-import AXSwiftExtension
 import AppKit
 import KeySender
 
@@ -15,7 +14,6 @@ import KeySender
 @objc(STKSelectedTextManager)
 public final class SelectedTextManager: NSObject {
 
-    /// Shared singleton instance
     @objc
     public static let shared = SelectedTextManager()
 
@@ -23,13 +21,16 @@ public final class SelectedTextManager: NSObject {
     private let pasteboardManager = PasteboardManager.shared
     private let appleScriptManager = AppleScriptManager.shared
 
-    /// Get selected text using specified strategy
+    /// Get selected text from current focused application using specified strategy
     ///
     /// - Parameter strategy: The text retrieval strategy to use
     /// - Returns: Selected text or nil if failed
     /// - Throws: Error if the operation fails
     @objc
-    public func getSelectedText(strategy: TextStrategy) async throws -> String? {
+    public func getSelectedText(
+        strategy: TextStrategy,
+        bundleID: String? = nil
+    ) async throws -> String? {
         logInfo("Attempting to get selected text using strategy: \(strategy.description)")
 
         switch strategy {
@@ -38,7 +39,9 @@ public final class SelectedTextManager: NSObject {
         case .accessibility:
             return try await getSelectedTextByAX()
         case .appleScript:
-            return try await getSelectedTextByAppleScript()
+            let frontmostApp = NSWorkspace.shared.frontmostApplication
+            let browserBundleID = bundleID ?? frontmostApp?.bundleIdentifier ?? ""
+            return try await getSelectedTextByAppleScript(from: browserBundleID)
         case .menuAction:
             return try await getSelectedTextByMenuAction()
         case .shortcut:
@@ -68,9 +71,10 @@ public final class SelectedTextManager: NSObject {
                     }
                 }
             } catch let error as SelectedTextKitError {
-                logError("Failed to get text via \(strategy.description): \(error.localizedDescription)")
+                logError(
+                    "Failed to get text via \(strategy.description): \(error.localizedDescription)")
                 lastError = error
-                
+
                 // Don't continue trying other strategies for certain critical errors
                 if case .accessibilityPermissionDenied = error {
                     throw error
@@ -84,12 +88,12 @@ public final class SelectedTextManager: NSObject {
         }
 
         logError("All strategies failed to get selected text")
-        
+
         // If we have a specific error from the last attempt, throw it
         if let lastError = lastError {
             throw lastError
         }
-        
+
         return nil
     }
 
@@ -181,23 +185,19 @@ public final class SelectedTextManager: NSObject {
             KeySender.copy()
         }
     }
-    
-    /// Get selected text by AppleScript
+
+    /// Get selected text by AppleScript from browser applications
     ///
-    /// - Returns: Selected text or nil if failed
-    /// - Throws: SelectedTextKitError if browser is not supported or other issues occur
-    private func getSelectedTextByAppleScript() async throws -> String? {
-        logInfo("Getting selected text by AppleScript")
-        
-        guard let frontmostApp = NSWorkspace.shared.frontmostApplication,
-              let bundleID = frontmostApp.bundleIdentifier else {
-            throw SelectedTextKitError.browserNotFound
+    /// - Parameter browserBundleID: The bundle identifier of the browser
+    /// - Returns: Selected text or nil if failed, throws on error
+    private func getSelectedTextByAppleScript(from browserBundleID: String) async throws -> String?
+    {
+        logInfo("Getting selected text by AppleScript from browser: \(browserBundleID)")
+
+        guard appleScriptManager.isBrowserSupportingAppleScript(browserBundleID) else {
+            throw SelectedTextKitError.unsupportedBrowser(bundleID: browserBundleID)
         }
-        
-        guard appleScriptManager.isBrowserSupportingAppleScript(bundleID) else {
-            throw SelectedTextKitError.unsupportedBrowser(bundleID: bundleID)
-        }
-        
-        return try await appleScriptManager.getSelectedTextFromBrowser(bundleID)
+
+        return try await appleScriptManager.getSelectedTextFromBrowser(browserBundleID)
     }
 }

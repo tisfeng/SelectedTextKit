@@ -1,18 +1,19 @@
 //
-//  SelectedTextKitExampleTests.swift
+//  PasteboardManagerTests.swift
 //  SelectedTextKitExampleTests
 //
-//  Created by tisfeng on 2025/9/4.
+//  Created by tisfeng on 2025/9/8.
 //
 
-import Testing
+import Foundation
+import SelectedTextKit
 import AppKit
-@testable import SelectedTextKit
+import Testing
 
-struct SelectedTextKitExampleTests {
-    let manager = PasteboardManager.shared
+struct PasteboardManagerTests {
+    let pasteboardManager = PasteboardManager.shared
     let pasteboard = NSPasteboard.general
-    
+
     // MARK: - PasteboardManager Tests
     
     @Test("Test pasteText with restorePasteboard true and false")
@@ -21,11 +22,11 @@ struct SelectedTextKitExampleTests {
         let testText = originalContent + " Appended Test Text"
 
         // Paste text with restoration
-        await manager.pasteText(testText, restorePasteboard: true)
+        await pasteboardManager.pasteText(testText, restorePasteboard: true)
         #expect(originalContent == pasteboard.string, "Pasteboard should be restored to original content")
         
         // Paste text without restoration to see the change
-        await manager.pasteText(testText, restorePasteboard: false)
+        await pasteboardManager.pasteText(testText, restorePasteboard: false)
         #expect(originalContent != pasteboard.string, "Pasteboard should not be restored, content should change")
     }
     
@@ -37,7 +38,7 @@ struct SelectedTextKitExampleTests {
 
         for index in 0 ..< testCount {
             let startTime = CFAbsoluteTimeGetCurrent()
-            await manager.pasteText(String(index), restorePasteboard: true, restoreInterval: 0.0)
+            await pasteboardManager.pasteText(String(index), restorePasteboard: true, restoreInterval: 0.0)
             let elapsedTime = CFAbsoluteTimeGetCurrent() - startTime
             costTimes.append(elapsedTime)
             

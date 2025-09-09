@@ -7,7 +7,6 @@
 //
 
 import AppKit
-import AXSwiftExtension
 
 extension NSPasteboard {
     /// Protect the pasteboard items from being changed by temporary tasks.
@@ -26,7 +25,7 @@ extension NSPasteboard {
         await task()
 
         await Task.sleep(seconds: restoreInterval)
-        
+
         restoreItems(savedItems)
     }
 }
@@ -93,7 +92,7 @@ extension NSPasteboard {
 extension NSPasteboard {
     /// A convenience property to get and set string content on the pasteboard.
     @objc
-    var string: String {
+    public var string: String {
         get { string(forType: .string) ?? "" }
         set {
             clearContents()

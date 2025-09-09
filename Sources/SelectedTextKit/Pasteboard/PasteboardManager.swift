@@ -6,7 +6,6 @@
 //  Copyright © 2024 izual. All rights reserved.
 //
 
-import AXSwiftExtension
 import AppKit
 import KeySender
 
@@ -80,7 +79,7 @@ public final class PasteboardManager: NSObject {
 
         return newContent
     }
-    
+
     // MARK: - Paste Methods
 
     /// Paste text by menu action first, if failed, fallback to keyboard shortcut paste.
@@ -101,7 +100,7 @@ public final class PasteboardManager: NSObject {
             restorePasteboard: restorePasteboard,
             restoreInterval: restoreInterval
         )
-        
+
         if !success {
             logInfo("Falling back to keyboard shortcut paste")
             _ = await performPasteOperation(
@@ -187,13 +186,13 @@ public final class PasteboardManager: NSObject {
             }
         }
     }
-    
+
     /// Types of paste actions
     public enum PasteType: String, CaseIterable {
         case keyboardShortcut
         case menuAction
     }
-    
+
     // MARK: - Polling Utility
 
     /// Poll task, if task is true, return true, else continue polling.

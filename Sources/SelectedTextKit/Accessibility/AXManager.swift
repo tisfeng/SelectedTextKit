@@ -6,9 +6,8 @@
 //  Copyright © 2024 izual. All rights reserved.
 //
 
-import AppKit
 import AXSwift
-import AXSwiftExtension
+import AppKit
 
 /// Manager class for accessibility-related operations
 @objc(STKAXManager)
@@ -48,4 +47,3 @@ public final class AXManager: NSObject {
         return selectedText
     }
 }
-
