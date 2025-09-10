@@ -33,13 +33,12 @@ extension AXManager {
             throw AXError.apiDisabled
         }
 
-        guard let appElement = frontmostAppElement else {
-            throw AXError.invalidUIElement
-        }
-
         logInfo("Checking \(menuItem) item in frontmost app: \(frontmostAppBundleID)")
 
-        guard let foundMenuItem = try appElement.findMenuItem(menuItem) else {
+        // Cannot replace appElement with systemWideElement
+        // because menu items are children of the application element
+        guard let appElement = frontmostAppElement,
+              let foundMenuItem = try appElement.findMenuItem(menuItem) else {
             throw AXError.noMenuItem
         }
 
@@ -66,15 +65,8 @@ extension AXManager {
         (try? findMenuItem(.paste)) != nil
     }
 
-    // MARK: - Frontmost Application
 
-    /// Frontmost application as `UIElement`
-    var frontmostAppElement: UIElement? {
-        guard let frontmostApp else {
-            return nil
-        }
-        return Application(frontmostApp)
-    }
+    // MARK: - Frontmost Application
 
     /// Frontmost application as `NSRunningApplication`
     var frontmostApp: NSRunningApplication? {
@@ -88,5 +80,13 @@ extension AXManager {
     /// Bundle identifier of frontmost application
     var frontmostAppBundleID: String {
         frontmostApp?.bundleIdentifier ?? ""
+    }
+    
+    /// Frontmost application as `UIElement`
+    var frontmostAppElement: UIElement? {
+        guard let frontmostApp else {
+            return nil
+        }
+        return Application(frontmostApp)
     }
 }

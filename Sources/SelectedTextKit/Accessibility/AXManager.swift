@@ -25,14 +25,8 @@ public final class AXManager: NSObject {
     public func getSelectedTextByAX() async throws -> String? {
         logInfo("Getting selected text via AX")
 
-        // Get frontmost application element
-        guard let frontmostAppElement = frontmostAppElement else {
-            logError("Failed to get frontmost application element")
-            throw AXError.invalidUIElement
-        }
-
         // Get the currently focused element
-        guard let focusedUIElement = try frontmostAppElement.focusedUIElement() else {
+        guard let focusedUIElement = try systemWideElement.focusedUIElement() else {
             logError("Failed to get focused UI element")
             throw AXError.invalidUIElement
         }
@@ -45,5 +39,23 @@ public final class AXManager: NSObject {
 
         logInfo("Selected text via AX: \(selectedText)")
         return selectedText
+    }
+}
+
+extension AXManager {
+    /// Get the frame of the selected text in the frontmost application
+    ///
+    /// - Returns: NSValue containing NSRect of selected text frame, or .zero rect if not available
+    @objc
+    public func getSelectedTextFrame() throws -> NSValue {
+        if let focusedUIElement = try systemWideElement.focusedUIElement(),
+           let selectedRange = try focusedUIElement.selectedTextRange(),
+           let bounds: NSRect = try focusedUIElement.parameterizedAttribute(
+               .boundsForRangeParameterized,
+               param: selectedRange
+           ) {
+            return NSValue(rect: bounds)
+        }
+        return NSValue(rect: .zero)
     }
 }

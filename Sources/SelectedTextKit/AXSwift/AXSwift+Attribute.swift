@@ -32,7 +32,7 @@ extension UIElement {
     }
 
     /// Get selected text range, throws error if failed
-    public func selectedRange() throws -> CFRange? {
+    public func selectedTextRange() throws -> CFRange? {
         try attribute(.selectedTextRange)
     }
     
