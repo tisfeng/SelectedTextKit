@@ -51,12 +51,11 @@ public final class SelectedTextManager: NSObject {
 
     /// Get selected text using multiple strategies in order
     ///
-    /// - Parameter strategies: Set of strategies to try in order
+    /// - Parameter strategies: Array of strategies to try in order
     /// - Returns: Selected text or nil if all strategies fail
     /// - Throws: SelectedTextKitError if operation fails due to system issues
-    public func getSelectedText(strategies: TextStrategySet) async throws -> String? {
-        logInfo(
-            "Attempting to get selected text using strategies: \(strategies)")
+    public func getSelectedText(strategies: [TextStrategy]) async throws -> String? {
+        logInfo("Attempting to get selected text using strategies: \(strategies)")
 
         var lastError: SelectedTextKitError?
 
@@ -90,7 +89,7 @@ public final class SelectedTextManager: NSObject {
         logError("All strategies failed to get selected text")
 
         // If we have a specific error from the last attempt, throw it
-        if let lastError = lastError {
+        if let lastError {
             throw lastError
         }
 

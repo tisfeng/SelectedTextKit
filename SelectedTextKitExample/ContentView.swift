@@ -131,10 +131,9 @@ struct ContentView: View {
             isLoading = true
             errorMessage = ""
             selectedText = ""
-            
+
             do {
-                let text = try await SelectedTextManager.shared.getSelectedText(
-                    strategy: selectedStrategy)
+                let text = try await SelectedTextManager.shared.getSelectedText(strategy: selectedStrategy)
                 selectedText = text ?? "No text selected"
             } catch {
                 errorMessage = "Failed to get selected text: \(error.localizedDescription)"

@@ -35,7 +35,3 @@ public enum TextStrategy: Int, CaseIterable, CustomStringConvertible {
         }
     }
 }
-
-// MARK: - TextStrategySet
-
-public typealias TextStrategySet = Set<TextStrategy>
