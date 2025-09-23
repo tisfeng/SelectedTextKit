@@ -80,6 +80,7 @@ func example() async {
             print("Text from menu copy: \(text)")
         }
 
+        // Option 5: Use shortcut strategy with muted volume
         if let text = try await textManager.getSelectedText(strategy: .shortcut) {
             print("Text from shortcut copy: \(text)")
         }
@@ -103,122 +104,42 @@ public enum TextStrategy {
 }
 
 // Create ordered strategy arrays (execution order matters!)
-let quickStrategies: [TextStrategy] = [.accessibility, .shortcut]
-let browserStrategies: [TextStrategy] = [.appleScript, .accessibility, .menuAction]
+let browserStrategies: [TextStrategy] = [.appleScript, .accessibility, .menuAction, .shortcut]
 let fallbackStrategies: [TextStrategy] = [.accessibility, .menuAction, .shortcut]
 ```
 
 ## API Reference
 
-### SelectedTextManager
+### Core Methods
 
-Main class for text retrieval operations:
-
-#### Core Methods
-
-- `getSelectedText(strategy: TextStrategy, bundleID: String? = nil)` - Get text using a specific strategy
+- `getSelectedText(strategy: TextStrategy)` - Get text using a specific strategy  
 - `getSelectedText(strategies: [TextStrategy])` - Get text using multiple strategies with ordered fallback
-  
-#### Strategy-Specific Methods
 
-- `getSelectedText(strategy: .accessibility)` - Get text via Accessibility API
-- `getSelectedText(strategy: .appleScript)` - Get text via AppleScript (browsers)
-- `getSelectedText(strategy: .menuAction)` - Get text via menu bar copy action
-- `getSelectedText(strategy: .shortcut)` - Get text via Cmd+C shortcut
-- `getSelectedText(strategy: .auto)` - Smart fallback strategy
+### Available Strategies
 
-#### Strategy Arrays
+| Strategy | Description | Best For |
+|----------|-------------|----------|
+| `.auto` | Smart fallback (accessibility → menu action) | **Recommended** - Most reliable |
+| `.accessibility` | Direct Accessibility API | Fast, lightweight access |
+| `.appleScript` | Browser automation via AppleScript | Safari, Chrome, Firefox |
+| `.menuAction` | System menu bar copy action | When accessibility is limited |
+| `.shortcut` | Cmd+C with muted system volume | Universal compatibility |
 
-Create ordered combinations of strategies (execution order is preserved):
-
-```swift
-// Fast strategies first
-let quickArray: [TextStrategy] = [.accessibility, .shortcut]
-
-// Browser-optimized strategies (AppleScript first for better performance)
-let browserArray: [TextStrategy] = [.appleScript, .accessibility, .menuAction]
-
-// Maximum compatibility (try fastest methods first)
-let compatibilityArray: [TextStrategy] = [.accessibility, .menuAction, .shortcut]
-```
-
-### TextStrategy Enum
-
-```swift
-public enum TextStrategy: Int, CaseIterable {
-    case auto          // Intelligent fallback
-    case accessibility // Accessibility API
-    case appleScript   // AppleScript (browsers)
-    case menuAction    // Menu bar copy
-    case shortcut      // Keyboard shortcut
-}
-```
-
-### Usage Scenarios
-
-#### 🚀 Quick Integration (Recommended)
-
-For most applications, use the auto strategy:
-
-```swift
-let textManager = SelectedTextManager.shared
-
-// Simple and reliable
-if let text = try await textManager.getSelectedText(strategy: .auto) {
-    // Process selected text
-}
-```
-
-#### 🌐 Browser Applications
-
-For browser-focused applications with AppleScript support:
-
-```swift
-let browserStrategies: [TextStrategy] = [.appleScript, .accessibility, .menuAction]
-
-if let text = try await textManager.getSelectedText(strategies: browserStrategies) {
-    // Process browser text
-}
-```
-
-#### ⚡ Performance-Optimized
-
-For applications requiring fast response:
-
-```swift
-let quickStrategies: [TextStrategy] = [.accessibility, .shortcut]
-
-if let text = try await textManager.getSelectedText(strategies: quickStrategies) {
-    // Process text quickly
-}
-```
-
-#### 🔄 Maximum Compatibility
-
-For applications requiring maximum success rate:
-
-```swift
-let allStrategies: [TextStrategy] = [.accessibility, .appleScript, .menuAction, .shortcut]
-
-if let text = try await textManager.getSelectedText(strategies: allStrategies) {
-    // Process with maximum compatibility
-}
-```
 
 ## Requirements
 
 - macOS 11.0+
+- Swift 5.7+
 
 ## Dependencies
 
 - [AXSwift](https://github.com/tmandry/AXSwift) - Accessibility framework
 - [KeySender](https://github.com/tisfeng/KeySender) - Keyboard event simulation
 
-## Thanks
+## Acknowledgments
 
-- Get selected text by menu bar action copy is inspired by [Copi](https://github.com/s1ntoneli/Copi/blob/531a12fdc2da66c809951926ce88af02593e0723/Copi/Utilities/SystemUtilities.swift#L257), thanks to [s1ntoneli](https://github.com/s1ntoneli)'s work.
-- Accessibility features built upon [AXSwift](https://github.com/tmandry/AXSwift) framework.
+- Menu bar copy action inspired by [Copi](https://github.com/s1ntoneli/Copi) by [s1ntoneli](https://github.com/s1ntoneli)
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+MIT License - see [LICENSE](LICENSE) for details.
