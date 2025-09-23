@@ -23,7 +23,7 @@ public final class AppleScriptManager {
     public func runAppleScript(_ script: String, timeout: TimeInterval = 5.0) async throws
         -> String?
     {
-        return try await withTimeout(in: .seconds(timeout)) {
+        return try await withTimeout(in: timeout) {
             return try await withCheckedThrowingContinuation { continuation in
                 DispatchQueue.global(qos: .userInitiated).async {
                     do {

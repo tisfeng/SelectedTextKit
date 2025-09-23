@@ -15,7 +15,7 @@ import Foundation
 /// - If the timeout elapses first, a `TimeoutError` is thrown and the other task is cancelled.
 ///
 /// - Parameters:
-///   - timeout: The maximum duration to wait before throwing a timeout.
+///   - seconds: The timeout duration in seconds.
 ///   - isolation: The actor isolation context for running the task. Defaults to the caller's isolation.
 ///   - body: The asynchronous operation to run.
 ///
@@ -28,7 +28,7 @@ import Foundation
 /// - Example:
 /// ```swift
 /// do {
-///     let result = try await withTimeout(in: .seconds(2)) {
+///     let result = try await withTimeout(in: 2.0) {
 ///         try await Task.sleep(for: .seconds(1))
 ///         return "done"
 ///     }
@@ -41,7 +41,7 @@ import Foundation
 /// - Note: This implementation uses structured concurrency to provide timeout functionality.
 /// - SeeAlso: https://github.com/swiftlang/swift-subprocess/issues/65#issuecomment-2970966110
 public func withTimeout<T: Sendable>(
-    in timeout: Duration,
+    in seconds: TimeInterval,
     isolation: isolated (any Actor)? = #isolation,
     body: @escaping () async throws -> T
 ) async throws -> T {
@@ -51,7 +51,7 @@ public func withTimeout<T: Sendable>(
         }
 
         group.addTask {
-            try await Task.sleep(for: timeout)
+            await Task.sleep(seconds: seconds)
             throw TimeoutError()
         }
 
