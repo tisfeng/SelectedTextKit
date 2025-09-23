@@ -15,36 +15,62 @@ extension AppleScriptManager {
     ///
     /// - Parameter operation: The operation to execute while muted
     /// - Returns: Result of the operation
-    /// - Throws: Any error from the operation or volume management
+    /// - Throws: Any error thrown by the operation or volume management
     public func withMutedAlertVolume<T>(_ operation: () async throws -> T) async throws -> T {
-        logInfo("Muting alert volume for operation")
-        
-        // Save current volume and mute in one operation
-        let originalVolume = try await muteAlertVolume()
-        logInfo("Original alert volume: \(originalVolume)")
+        logInfo("Attempting to mute alert volume for operation")
+
+        // Try to save current volume and mute, but don't fail if it doesn't work
+        var originalVolume: Int? = nil
+        do {
+            originalVolume = try await muteAlertVolume()
+            logInfo("Successfully muted alert volume, original: \(originalVolume ?? -1)")
+        } catch {
+            logError("Failed to mute alert volume: \(error), continuing with operation")
+        }
 
         do {
-            // Execute the operation
+            // Execute the operation regardless of mute success
             let result = try await operation()
-            logInfo("Operation completed, restoring alert volume to \(originalVolume)")
+            logInfo("Operation completed successfully")
 
-            Task {
-                // Wait a moment to ensure any alert sound has finished
-                await Task.sleep(seconds: 1.0)
-                
-
-                // Restore original volume
-                try await setAlertVolume(originalVolume)
-                logInfo("Alert volume restored to \(originalVolume)")
+            // Restore volume asynchronously without blocking the return
+            if let volume = originalVolume, volume > 0 {
+                restoreVolumeAsync(volume, delaySeconds: 1.0)
             }
+
             return result
         } catch {
-            // Ensure we restore volume even if operation fails
-            try? await setAlertVolume(originalVolume)
+            logError("Operation failed: \(error)")
+
+            // Try to restore volume immediately if operation failed
+            if let volume = originalVolume, volume > 0 {
+                restoreVolumeAsync(volume, delaySeconds: 0)
+            }
+
             throw error
         }
     }
-    
+
+    /// Restore volume asynchronously without blocking the caller
+    ///
+    /// - Parameters:
+    ///   - volume: The volume level to restore
+    ///   - delaySeconds: Delay before restoring (0 for immediate)
+    private func restoreVolumeAsync(_ volume: Int, delaySeconds: TimeInterval) {
+        Task.detached { [weak self] in
+            if delaySeconds > 0 {
+                await Task.sleep(seconds: delaySeconds)
+            }
+
+            do {
+                try await self?.setAlertVolume(volume)
+                logInfo("Alert volume restored to \(volume)")
+            } catch {
+                logError("Failed to restore alert volume to \(volume): \(error)")
+            }
+        }
+    }
+
     /// Mute alert volume and return the original volume level
     ///
     /// - Returns: Original alert volume level (0-100)
@@ -67,7 +93,7 @@ extension AppleScriptManager {
 
         return originalVolume
     }
-    
+
     /// Get current system alert volume
     ///
     /// - Returns: Current alert volume (0-100) or nil if failed
@@ -98,7 +124,7 @@ extension AppleScriptManager {
     ///
     /// - Parameter commands: The commands to execute within System Events
     /// - Returns: Complete AppleScript string
-    public func systemEventsScript(_ commands: String) -> String {
+    private func systemEventsScript(_ commands: String) -> String {
         return """
             tell application "System Events"
                 \(commands)

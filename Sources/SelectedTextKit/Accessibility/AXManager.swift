@@ -26,7 +26,8 @@ public final class AXManager: NSObject {
         logInfo("Getting selected text via AX")
 
         // Get the currently focused element
-        guard let focusedUIElement = try systemWideElement.focusedUIElement() else {
+        guard let appElement = frontmostAppElement,
+              let focusedUIElement = try appElement.focusedUIElement() else {
             logError("Failed to get focused UI element")
             throw AXError.invalidUIElement
         }

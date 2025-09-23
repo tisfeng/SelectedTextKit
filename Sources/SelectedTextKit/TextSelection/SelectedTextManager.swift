@@ -24,6 +24,7 @@ public final class SelectedTextManager: NSObject {
     /// Get selected text from current focused application using specified strategy
     ///
     /// - Parameter strategy: The text retrieval strategy to use
+    /// - Parameter bundleID: Optional browser bundle identifier for AppleScript strategy
     /// - Returns: Selected text or nil if failed
     /// - Throws: Error if the operation fails
     @objc
@@ -39,9 +40,7 @@ public final class SelectedTextManager: NSObject {
         case .accessibility:
             return try await getSelectedTextByAX()
         case .appleScript:
-            let frontmostApp = NSWorkspace.shared.frontmostApplication
-            let browserBundleID = bundleID ?? frontmostApp?.bundleIdentifier ?? ""
-            return try await getSelectedTextByAppleScript(from: browserBundleID)
+            return try await getSelectedTextByAppleScript(from: bundleID)
         case .menuAction:
             return try await getSelectedTextByMenuAction()
         case .shortcut:
@@ -192,8 +191,10 @@ public final class SelectedTextManager: NSObject {
     ///
     /// - Parameter browserBundleID: The bundle identifier of the browser
     /// - Returns: Selected text or nil if failed, throws on error
-    private func getSelectedTextByAppleScript(from browserBundleID: String) async throws -> String?
-    {
+    private func getSelectedTextByAppleScript(from browserBundleID: String?) async throws -> String? {
+        let frontmostApp = NSWorkspace.shared.frontmostApplication
+        let browserBundleID = browserBundleID ?? frontmostApp?.bundleIdentifier ?? ""
+        
         logInfo("Getting selected text by AppleScript from browser: \(browserBundleID)")
 
         guard appleScriptManager.isBrowserSupportingAppleScript(browserBundleID) else {
