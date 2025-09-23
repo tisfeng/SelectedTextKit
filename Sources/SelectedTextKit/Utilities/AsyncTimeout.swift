@@ -37,6 +37,8 @@ import Foundation
 ///     print("Timeout or error:", error)
 /// }
 /// ```
+///
+/// - Note: This implementation uses structured concurrency to provide timeout functionality.
 /// - SeeAlso: https://github.com/swiftlang/swift-subprocess/issues/65#issuecomment-2970966110
 public func withTimeout<T: Sendable>(
     in timeout: Duration,
