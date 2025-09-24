@@ -16,26 +16,22 @@ public final class AXManager: NSObject {
     @objc
     public static let shared = AXManager()
 
-    /// Get selected text by AX
+    /// Retrieves the currently selected text using Accessibility (AX).
     ///
-    /// - Returns: Selected text or throws AXError
+    /// - Returns: The selected text as a `String`, or `nil` if no text is selected.
+    /// - Throws: An `AXError` if the focused element is invalid or the selected text cannot be retrieved.
     ///
-    /// - Important: objc can get AXError value by NSError.code
+    /// - Note: In Objective-C, the `AXError` can be accessed via `NSError.code`.
     @objc
     public func getSelectedTextByAX() async throws -> String? {
         logInfo("Getting selected text via AX")
 
-        // Get the currently focused element
-        guard let focusedUIElement = try systemWideElement.focusedUIElement() else {
-            logError("Failed to get focused UI element")
-            throw AXError.invalidUIElement
-        }
-
-        // Get the selected text
-        guard let selectedText = try focusedUIElement.selectedText() else {
-            logError("No selected text available")
-            throw AXError.noValue
-        }
+        // For AXSwift:
+        // If the error is `.noValue` or `.attributeUnsupported`, `nil` is returned instead of throwing.
+        let focusedUIElement = try systemWideElement.focusedUIElement()
+        
+        // Extract the selected text from the focused element.
+        let selectedText = try focusedUIElement?.selectedText()
 
         logInfo("Selected text via AX: \(selectedText)")
         return selectedText
