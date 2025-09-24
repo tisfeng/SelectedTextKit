@@ -28,10 +28,13 @@ public final class AXManager: NSObject {
 
         // For AXSwift:
         // If the error is `.noValue` or `.attributeUnsupported`, `nil` is returned instead of throwing.
-        let focusedUIElement = try systemWideElement.focusedUIElement()
+        // So we need to explicitly throw error if focused element is nil.
+        guard let focusedUIElement = try systemWideElement.focusedUIElement() else {
+            throw AXError.noValue
+        }
         
         // Extract the selected text from the focused element.
-        let selectedText = try focusedUIElement?.selectedText()
+        let selectedText = try focusedUIElement.selectedText()
 
         logInfo("Selected text via AX: \(selectedText)")
         return selectedText
