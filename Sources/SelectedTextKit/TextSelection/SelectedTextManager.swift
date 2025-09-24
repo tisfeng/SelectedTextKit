@@ -106,13 +106,12 @@ public final class SelectedTextManager: NSObject {
         logInfo("Using auto strategy for getting selected text")
 
         // Try Accessibility method first
-        if let text = try await getSelectedTextByAX() {
-            if !text.isEmpty {
-                logInfo("Successfully got non-empty text via Accessibility")
-                return text
-            } else {
-                logInfo("Accessibility returned empty text")
-            }
+        let text = try await getSelectedTextByAX()
+        if !text.isEmpty {
+            logInfo("Successfully got non-empty text via Accessibility")
+            return text
+        } else {
+            logInfo("Accessibility returned empty text")
         }
 
         do {
@@ -150,7 +149,7 @@ public final class SelectedTextManager: NSObject {
     /// Get selected text by AXUI
     ///
     /// - Returns: Selected text or nil if failed, throws on error
-    private func getSelectedTextByAX() async throws -> String? {
+    private func getSelectedTextByAX() async throws -> String {
         return try await axManager.getSelectedTextByAX()
     }
 

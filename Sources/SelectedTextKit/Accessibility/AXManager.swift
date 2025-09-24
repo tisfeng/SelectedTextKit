@@ -23,18 +23,16 @@ public final class AXManager: NSObject {
     ///
     /// - Note: In Objective-C, the `AXError` can be accessed via `NSError.code`.
     @objc
-    public func getSelectedTextByAX() async throws -> String? {
+    public func getSelectedTextByAX() async throws -> String {
         logInfo("Getting selected text via AX")
 
         // For AXSwift:
         // If the error is `.noValue` or `.attributeUnsupported`, `nil` is returned instead of throwing.
         // So we need to explicitly throw error if focused element is nil.
-        guard let focusedUIElement = try systemWideElement.focusedUIElement() else {
+        guard let focusedUIElement = try systemWideElement.focusedUIElement(),
+              let selectedText = try focusedUIElement.selectedText() else {
             throw AXError.noValue
         }
-        
-        // Extract the selected text from the focused element.
-        let selectedText = try focusedUIElement.selectedText()
 
         logInfo("Selected text via AX: \(selectedText)")
         return selectedText
