@@ -16,7 +16,7 @@ let package = Package(
             targets: ["SelectedTextKit"])
     ],
     dependencies: [
-        .package(url: "https://github.com/clavierorg/AXSwift.git", from: "0.3.3"),
+        .package(url: "https://github.com/tmandry/AXSwift", from: "0.3.2"),
         .package(url: "https://github.com/jordanbaird/KeySender", from: "0.0.5"),
     ],
     targets: [
