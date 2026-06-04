@@ -9,15 +9,36 @@
 import AppKit
 
 extension NSPasteboard {
+    /// Pasteboard type marker used to opt the restored contents OUT of
+    /// clipboard-history recording in well-behaved clipboard managers
+    /// (Maccy, Pastebot, Alfred, LaunchBar, PopClip, …). The convention
+    /// is documented at https://nspasteboard.com/. Setting this on the
+    /// final restore step makes the round-trip invisible to history
+    /// listeners — exactly what callers expect from a "temporary task".
+    public static let transientType = NSPasteboard.PasteboardType(
+        rawValue: "org.nspasteboard.TransientType"
+    )
+
     /// Protect the pasteboard items from being changed by temporary tasks.
     /// This method will backup current pasteboard contents, execute the task, and then restore the original contents.
     ///
+    /// The restore step is marked with `org.nspasteboard.TransientType`
+    /// (https://nspasteboard.com/) so clipboard managers skip it — the
+    /// whole point of `performTemporaryTask` is to leave no user-visible
+    /// trace of the round-trip, and the marker is the standard way to
+    /// communicate "this write is transient" to history consumers.
+    ///
     /// - Parameters:
     ///   - restoreInterval: Delay before restoring contents
+    ///   - markRestoreAsTransient: When `true` (default) the restore
+    ///     declares the nspasteboard transient marker. Set `false` to
+    ///     opt out — useful if a caller explicitly wants the restored
+    ///     state to look like a fresh user copy.
     ///   - task: The async task to execute
     @MainActor
     public func performTemporaryTask(
         restoreInterval: TimeInterval = 0.0,
+        markRestoreAsTransient: Bool = true,
         task: @escaping () async -> Void
     ) async {
         let savedItems = backupItems()
@@ -26,7 +47,7 @@ extension NSPasteboard {
 
         await Task.sleep(seconds: restoreInterval)
 
-        restoreItems(savedItems)
+        restoreItems(savedItems, markAsTransient: markRestoreAsTransient)
     }
 }
 
@@ -68,15 +89,36 @@ extension NSPasteboard {
         return itemsToBackup
     }
 
-    /// Restore pasteboard contents from saved items
-    /// - Parameter pasteboardItems: Array of pasteboard items to restore
-    /// - Returns: True if restoration was successful, false otherwise
+    /// Restore pasteboard contents from saved items.
+    ///
+    /// - Parameters:
+    ///   - pasteboardItems: Array of pasteboard items to restore.
+    ///   - markAsTransient: When `true` (default) the restore declares
+    ///     `org.nspasteboard.TransientType` so well-behaved clipboard
+    ///     managers (Maccy, Pastebot, etc.) skip the entry. The marker
+    ///     is added as an empty-string value on each restored item, so
+    ///     all original data types remain readable.
+    /// - Returns: True if restoration was successful, false otherwise.
     @MainActor
     @discardableResult
-    @objc public func restoreItems(_ pasteboardItems: [NSPasteboardItem]) -> Bool {
+    @objc public func restoreItems(
+        _ pasteboardItems: [NSPasteboardItem],
+        markAsTransient: Bool = true
+    ) -> Bool {
         guard !pasteboardItems.isEmpty else {
             logInfo("No pasteboard items to restore")
             return false
+        }
+
+        if markAsTransient {
+            // Re-add the marker on each restored item. Clipboard managers
+            // check `pasteboard.types` (or per-item `types`) for the
+            // marker before recording, so it must be present at the time
+            // of the write — declaring it later would not retroactively
+            // suppress the change-count tick.
+            for item in pasteboardItems {
+                item.setString("", forType: NSPasteboard.transientType)
+            }
         }
 
         clearContents()
