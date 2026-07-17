@@ -11,6 +11,11 @@ import AXSwift
 // MARK: - UIElement Attribute Extensions
 
 extension UIElement {
+    /// Get the focused application, throws error if failed
+    public func focusedApplication() throws -> UIElement? {
+        try attribute(.focusedApplication)
+    }
+
     /// Get focused UI element, throws error if failed
     public func focusedUIElement() throws -> UIElement? {
         try attribute(.focusedUIElement)
@@ -77,4 +82,3 @@ extension Attribute {
     public static let cmdVirtualKey = "AXMenuItemCmdVirtualKey"
     public static let cmdModifiers = "AXMenuItemCmdModifiers"
 }
-

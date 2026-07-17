@@ -26,15 +26,37 @@ public final class AXManager: NSObject {
     public func getSelectedTextByAX() async throws -> String {
         logInfo("Getting selected text via AX")
 
-        // For AXSwift:
-        // If the error is `.noValue` or `.attributeUnsupported`, `nil` is returned instead of throwing.
-        // So we need to explicitly throw error if focused element is nil.
-        guard let focusedUIElement = try systemWideElement.focusedUIElement(),
+        guard let focusedApplication = try systemWideElement.focusedApplication() else {
+            throw AXError.noValue
+        }
+        let processID = try focusedApplication.pid()
+
+        let selectedText: String
+        if processID == ProcessInfo.processInfo.processIdentifier {
+            selectedText = try await MainActor.run {
+                try Self.selectedText(inProcess: processID)
+            }
+        } else {
+            selectedText = try await Task.detached(priority: .userInitiated) {
+                try Self.selectedText(inProcess: processID)
+            }.value
+        }
+
+        logInfo("Selected text via AX: \(selectedText)")
+        return selectedText
+    }
+
+    /// Reads selected text from a fixed target process on the current executor.
+    private static func selectedText(inProcess processID: pid_t) throws -> String {
+        let application = UIElement(AXUIElementCreateApplication(processID))
+
+        // AXSwift returns nil for missing or unsupported attributes, so convert
+        // those results to the error expected by existing callers.
+        guard let focusedUIElement = try application.focusedUIElement(),
               let selectedText = try focusedUIElement.selectedText() else {
             throw AXError.noValue
         }
 
-        logInfo("Selected text via AX: \(selectedText)")
         return selectedText
     }
 }
