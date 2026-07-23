@@ -26,10 +26,12 @@ public final class AXManager: NSObject {
     public func getSelectedTextByAX() async throws -> String {
         logInfo("Getting selected text via AX")
 
-        guard let focusedApplication = try systemWideElement.focusedApplication() else {
+        let processID = await MainActor.run {
+            NSWorkspace.shared.frontmostApplication?.processIdentifier
+        }
+        guard let processID else {
             throw AXError.noValue
         }
-        let processID = try focusedApplication.pid()
 
         let selectedText: String
         if processID == ProcessInfo.processInfo.processIdentifier {
