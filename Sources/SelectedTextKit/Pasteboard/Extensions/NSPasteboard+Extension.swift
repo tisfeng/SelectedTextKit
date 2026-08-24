@@ -14,10 +14,13 @@ extension NSPasteboard {
     ///
     /// - Parameters:
     ///   - restoreInterval: Delay before restoring contents
+    ///   - shouldRestore: Optional validation closure evaluated before restoring.
+    ///     Return false to keep the current contents instead of the backup.
     ///   - task: The async task to execute
     @MainActor
     public func performTemporaryTask(
         restoreInterval: TimeInterval = 0.0,
+        shouldRestore: (() -> Bool)? = nil,
         task: @escaping () async -> Void
     ) async {
         let savedItems = backupItems()
@@ -26,6 +29,9 @@ extension NSPasteboard {
 
         await Task.sleep(seconds: restoreInterval)
 
+        if let shouldRestore, !shouldRestore() {
+            return
+        }
         restoreItems(savedItems)
     }
 }

@@ -53,6 +53,9 @@ public final class PasteboardManager: NSObject {
         let pasteboard = NSPasteboard.general
         let initialChangeCount = pasteboard.changeCount
         var newContent: String?
+        // The last change count accepted as the result of `action`. Used to
+        // detect writes made by others before restoring the backup.
+        var lastObservedChangeCount = initialChangeCount
 
         let executeAction = { [self] in
             do {
@@ -69,6 +72,7 @@ public final class PasteboardManager: NSObject {
                     // !!!: The pasteboard content may be nil or other strange content(such as old content) if the pasteboard is changing by other applications in the same time, like PopClip.
                     newContent = pasteboard.string
                     if let newContent, !newContent.isEmpty {
+                        lastObservedChangeCount = pasteboard.changeCount
                         logInfo("New Pasteboard content: \(newContent)")
                         return true
                     }
@@ -82,7 +86,22 @@ public final class PasteboardManager: NSObject {
 
         if restoreOriginal {
             await pasteboard.performTemporaryTask(
-                restoreInterval: restoreInterval, task: executeAction)
+                restoreInterval: restoreInterval,
+                shouldRestore: {
+                    // Restore only when the pasteboard was last written by our
+                    // own action. Restoring over a newer write (e.g. the user
+                    // pressing ⌘C inside the backup→restore window) would
+                    // silently revert that copy, and restoring when nothing
+                    // changed is pure changeCount churn.
+                    let shouldRestore = lastObservedChangeCount != initialChangeCount
+                        && pasteboard.changeCount == lastObservedChangeCount
+                    if !shouldRestore {
+                        logInfo(
+                            "Skip restoring pasteboard: unchanged or changed by others")
+                    }
+                    return shouldRestore
+                },
+                task: executeAction)
         } else {
             await executeAction()
         }
