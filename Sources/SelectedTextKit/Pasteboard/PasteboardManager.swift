@@ -51,7 +51,7 @@ public final class PasteboardManager: NSObject {
         logInfo("Getting next pasteboard content")
 
         let pasteboard = NSPasteboard.general
-        let initialChangeCount = pasteboard.changeCount
+        var initialChangeCount = pasteboard.changeCount
         var newContent: String?
         // The last change count accepted as the result of `action`. Used to
         // detect writes made by others before restoring the backup.
@@ -60,6 +60,10 @@ public final class PasteboardManager: NSObject {
         let executeAction = { [self] in
             do {
                 logInfo("Executing trigger action")
+                // 在动作执行前一刻记录基线,把"备份之后、动作之前"的第三方写入
+                // 被误判为动作结果的窗口压缩到最小(备份与基线之间无异步间隙)
+                initialChangeCount = pasteboard.changeCount
+                lastObservedChangeCount = initialChangeCount
                 try action()
             } catch {
                 logError("Failed to execute trigger action: \(error)")
@@ -88,18 +92,28 @@ public final class PasteboardManager: NSObject {
             await pasteboard.performTemporaryTask(
                 restoreInterval: restoreInterval,
                 shouldRestore: {
-                    // Restore only when the pasteboard was last written by our
-                    // own action. Restoring over a newer write (e.g. the user
-                    // pressing ⌘C inside the backup→restore window) would
-                    // silently revert that copy, and restoring when nothing
-                    // changed is pure changeCount churn.
-                    let shouldRestore = lastObservedChangeCount != initialChangeCount
+                    // 1. 动作产生了文本写入且其后没有第三方写入:恢复备份,
+                    //    避免取词触发的复制结果残留在用户剪贴板
+                    if lastObservedChangeCount != initialChangeCount
                         && pasteboard.changeCount == lastObservedChangeCount
-                    if !shouldRestore {
-                        logInfo(
-                            "Skip restoring pasteboard: unchanged or changed by others")
+                    {
+                        return true
                     }
-                    return shouldRestore
+
+                    // 2. 动作改变了剪贴板但当前内容为有效空:目标应用对空选区执行了
+                    //    复制并清空了剪贴板,必须恢复备份,否则用户原内容直接丢失
+                    if pasteboard.changeCount != initialChangeCount
+                        && pasteboard.isEffectivelyEmpty
+                    {
+                        logInfo("Restore pasteboard: changed by action but left effectively empty")
+                        return true
+                    }
+
+                    // 3. 其余情况:剪贴板无变化,或第三方写入了有意义的新内容
+                    //    (如截图工具刚写入的图片),保留现状,不能用过期备份覆盖
+                    logInfo(
+                        "Skip restoring pasteboard: unchanged or changed by others")
+                    return false
                 },
                 task: executeAction)
         } else {
