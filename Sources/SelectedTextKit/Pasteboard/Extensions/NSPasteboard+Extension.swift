@@ -105,4 +105,12 @@ extension NSPasteboard {
             setString(newValue, forType: .string)
         }
     }
+
+    /// 剪贴板当前是否为“有效空”:无任何类型,或仅有一个空字符串。
+    /// 用于识别模拟 ⌘C 后目标应用对空选区执行复制、清空了剪贴板的场景。
+    var isEffectivelyEmpty: Bool {
+        guard let types, !types.isEmpty else { return true }
+        guard types.count == 1, types.contains(.string) else { return false }
+        return string.isEmpty
+    }
 }
