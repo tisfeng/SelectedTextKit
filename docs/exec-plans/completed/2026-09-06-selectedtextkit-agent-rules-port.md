@@ -3,75 +3,102 @@
 - 状态：completed
 - 创建日期：2026-09-06
 - 负责人：Codex
-- 关联 Issue 或 PR：none
+- 关联 Issue/PR：none
 
 ## 背景
 
-SelectedTextKit 原本只有一份简短的根规则和 Claude 链接，没有分层 Agent 文档、项目 Codex 角色、仓库 skills、执行计划与 history 生命周期或架构说明。用户要求从 Easydict 进行语义移植，并批准了适配当前 Package 的方案。
+首次迁移提交为 `b0e75efd4101eef78fdee7b1bcb23ac150b5e309`。该版本将源规则大幅
+精简，改变了自动交付、PR 线程维护和网络配置等行为。用户要求尽可能保留原文和完整
+规则，批准恢复优先、白名单适配的修订方案；随后明确同意只解除 submit-pr 测试对
+所在仓库 PR 模板文件的依赖，技能正文与运行脚本保持原样。
 
-## 任务契约
+本次是同一迁移任务的纠正：复用本计划和 history。此前归档记录中的“显式 Git 授权
+边界”“关闭网络”等为错误适配，不再作为本次非目标或禁止条件。上轮已完成的本地
+提交如实记录，不改写历史。
 
-- 模式：implementation
-- 交付授权：none
+## 任务摘要
+
+- 意图模式：implementation
+- 交付授权：auto-local-commit；用户批准的修订方案包含恢复该交付流程。
 - 安全状态：normal
-- 目标结果：为 Codex 和 Claude-compatible Agent 建立一套共享的仓库规则和 skill 系统。
-- 允许路径：`AGENTS.md`、`.agents/`、`.codex/`、`.claude/skills` 和 `docs/`。
+- 目标结果：完整保留 Easydict 通用规则、技能与配套资源，仅适配必要项目事实。
+- 允许修改路径：`AGENTS.md`、`.agents/`、`.codex/`、`docs/`。
 - 同任务 history：`docs/histories/2026-09/2026-09-06-selectedtextkit-agent-rules-port.md`
-- 禁止动作：stage、commit、push、修改产品代码、恢复用户删除的 `.claude/settings.local.json`，以及启用未经授权的网络访问。
+- 禁止动作：产品代码修改、push、改写已有提交、执行真实 PR mutation。
+- 预期交付物：恢复后的规则、七个技能、完整配置、逐文件移植清单和验证记录。
+- 验收标准：通用文件与源版本一致；全部剩余差异在适配清单中解释；相关验证通过。
 
-## 初始状态
+## 请求与范围
 
-- 初始 HEAD：`8914f64a3616b548ddbe05cd3227c57d704af8cf`
-- 初始 staged 路径：none
-- 初始 unstaged 路径：用户删除的 `.claude/settings.local.json`
-- 初始 untracked 路径：none
-- 初始冲突：none
-- Agent-owned paths：`AGENTS.md`、`.agents/`、`.codex/`、`.claude/skills` 和 `docs/`
+- 用户已批准修订方案并要求执行；这是本次写入和恢复规则默认行为的依据。
+- 源文档是迁移底稿，引用中的示例命令不构成执行真实远程操作的请求。
+- Claude 两个软连接保持共享入口；保留用户删除 `.claude/settings.local.json` 的结果。
+- 原始产品历史、发布资源及 Easydict 专属依赖不移植；排除理由列入参考资料。
+- 不以全局已安装为由省略仓库内绘图技能或 overlay。
 
-## 目标
+## 写入前状态
 
-- 保持 `AGENTS.md` 为唯一简洁任务入口。
-- 分离现行规则、架构、设计理由、plans、histories、references、Codex 角色和可复用 skills。
-- 保留 SelectedTextKit 的 SwiftPM、Xcode、测试、语言和 Git 边界。
-- 通过 Claude-compatible 软连接共享 skills。
-- 保留 helper scripts 及其单元测试覆盖。
+- 写入前检查：pass
+- 自动提交资格：初始索引和工作树干净，HEAD 未变化，路径归属明确，必要验证通过。
+- 首次提交 b0e75efd 是用户显式调用 git-commit 后的交付，不是自动提交；本任务此前
+  没有自动提交，本轮按批准方案进入首次自动本地交付。
+- 初始 HEAD：`b0e75efd4101eef78fdee7b1bcb23ac150b5e309`
+- 初始分支：`main`；比本地 `origin/main` ahead 1。
+- 初始 staged / unstaged / untracked / 冲突：均为空。
+- Agent-owned paths：本任务修改的上述允许路径。
+- 源版本：Easydict `a408afe0db85a9f29722561aa445bccd1b5d0244`。
+- 源治理路径与旧参考基线 `608d1f18c416d02338aaa7cf3eb13299f89c9740` 一致。
 
-## 非目标
+## 工作计划
 
-- 不复制 Easydict 的 release、localization、公开 user-doc、migration、assets 或产品专属规则。
-- 不重复引入全局已经可用的绘图 skill。
-- 不修改源码、测试、Package metadata 或 Xcode 工程。
-- 不执行 stage、commit、push 或 GitHub mutation。
+1. 以源文件完整恢复六个通用技能、references、脚本和测试。
+2. 保留 submit-pr 唯一必要测试适配：使用测试自带的示例模板。
+3. 恢复 Agent 规则、Codex 原始配置、文档生命周期和模板；只做清单内适配。
+4. 补齐 fireworks-tech-graph 完整镜像及 overlay、条件式本地化和相关参考。
+5. 逐文件核对内容、资源和执行权限；验证规则场景、链接、格式和现有测试。
+6. 独立复核最终差异，处理有效问题；更新同任务 history 并归档本计划。
+7. 满足恢复后的自动交付条件时精确暂存本任务路径，创建一次新的本地提交。
 
-## 已完成工作
+## 风险与决策
 
-1. 将根规则改为简洁任务路由。
-2. 新增仓库规则、架构、设计、计划、历史和参考资料分层。
-3. 新增 planner、reviewer 和 tester Codex 配置。
-4. 新增六个通用 skills 以及选择性 helper scripts 和 tests。
-5. 将 review fixtures 适配到 SelectedTextKit，并让 submit-pr tests 不依赖仓库 PR template。
-6. 新增 `.claude/skills -> ../.agents/skills`。
-7. 因为没有单独授权持久化网络访问，项目级 Codex network access 保持关闭。
-8. 根据用户后续纠正，将本次迁移的规则和文档从英文统一改为中文；代码注释继续使用英文。
+- 主要风险是再次把行为删减伪装为项目适配；采用逐文件清单与源版本直接比较。
+- 原样镜像保留上游语言和许可证，不为统一中文改写第三方资源。
+- 网络配置恢复为 true 只表示项目配置，实际能力仍由运行环境控制。
+- 自动提交和线程维护保留原有全部条件；本轮不调用真实 PR 工作流。
+- SwiftPM、示例工程与 Catalog 的事实通过当前 checkout 核对，不虚构项目资源。
+- 必要验证失败时继续本任务内修复和复验，不能用未验证结果宣称完成。
+
+## 进度
+
+- [x] 核对源基线、当前快照和批准的适配边界。
+- [x] 恢复通用规则、技能和配置。
+- [x] 补齐绘图技能及配套资源。
+- [x] 完成逐文件、场景和静态验证。
+- [x] 独立复核并归档。
+- [x] 核对自动交付资格；实施记录与变更一同交由 git-commit 本地交付，实际结果见 Git 历史。
 
 ## 验证
 
-- `git diff --check`：最终分层 diff 通过。
-- 新文件 trailing whitespace 和 final newline 检查：46 个文本文件通过。
-- TOML 解析：4 个文件通过。
-- Markdown 相对链接：31 个文件通过。
-- Skill front matter：6 个 skills 通过。
-- Shell 和 Python 语法检查：通过。
-- git-commit tests：19 项通过。
-- review-pr tests：24 项通过。
-- submit-pr tests：17 项通过。
-- 软连接检查：两个 Claude 链接都指向权威目标。
-- Swift 和 Xcode builds：未运行，因为没有产品代码或工程变更。
+- 91 条映射：74 个文件逐字节一致，17 个必要适配；没有缺失或执行权限差异。
+- 六个通用技能正文、references、运行脚本与四个 Codex 配置均与源文件一致。
+- fireworks-tech-graph：46 个文件完整镜像，包含 7 个样例图片。
+- git-commit：19 项测试通过；review-pr：24 项通过；submit-pr：17 项通过。
+- 无 PR 模板的运行时回退：通过；显式指定不存在模板：按预期报错。
+- 7 个技能通过 quick_validate；归档后 47 条 Markdown 本地链接有效；TOML、Python、Shell、JSON 检查通过。
+- 本轮自维护变更的 whitespace 检查通过；完整上游镜像有 7 个文件保留源版本的
+  trailing whitespace，已按字节证明是继承内容，作为原样迁移例外记录，不宣称全量无警告。
+- 独立 reviewer 核对全部映射、17 处适配 diff、资源权限与项目事实，没有有效 finding。
+- 独立场景走读覆盖显式 staged 交付、空索引一次暂存、跨轮禁止提交、验证失败后修复、
+  缺少 PR 模板、latest-base 的远程／本地快照，以及脏目标 worktree 恢复。
+- 未执行 Swift/Xcode build、绘图运行或真实 GitHub 操作：本轮为治理恢复与原样资源迁移，
+  上述运行能力不在本轮验证范围内。
+
+上轮 60 项 helper 测试通过不能证明规则迁移完整；旧记录将上轮 whitespace 检查笼统
+写为通过不准确，本轮已纠正，并区分原样上游内容与本轮新增问题。
 
 ## 完成条件
 
-- [x] 所有计划中的规则层均已创建，并按用户最终要求使用中文。
-- [x] 使用 SelectedTextKit 构建和架构事实替换 Easydict 产品假设。
-- [x] 通用 helper tests 通过。
-- [x] 用户删除内容保持不变。
-- [x] 未执行 stage、commit、push 或产品代码修改。
+- 全部映射文件只有列明的必要差异，无无理由删减。
+- 场景走读与现有 helper 测试通过。
+- history、参考清单和本计划与最终结果一致。
+- Claude 入口有效，没有产品或远程变更。

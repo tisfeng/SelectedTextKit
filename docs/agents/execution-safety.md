@@ -1,38 +1,59 @@
 # 执行安全与变更门禁
 
-本文定义何时可以改变仓库或 artifact 状态。任务模式见 [`request-boundary.md`](request-boundary.md)，Git 交付见 [`git-workflow.md`](git-workflow.md)，文档生命周期见 [`README.md`](README.md)。
+本文规定 Agent 何时可以改变工作树或其他获准 artifact，以及何时必须停止；请求模式见
+[`request-boundary.md`](request-boundary.md)，Git 状态和交付见
+[`git-workflow.md`](git-workflow.md)，计划与 history 生命周期见 [`README.md`](README.md)。
 
 ## 核心规则
 
-- Planning 保持只读。
-- Implementation 必须有明确授权，并且只修改实现请求所必需的路径。
-- 保留无关的 staged、unstaged、untracked 和冲突内容。
-- 按风险选择验证，并区分实际执行的检查与未运行检查。
-- 任何产生仓库差异的 implementation 都必须有一条同任务 history。
+- 普通 `planning` 只读取、搜索、检查、诊断、起草和报告。已明确请求的工作流准备
+  副作用按 `request-boundary.md` 单独识别授权，不因分析目标而自动允许或禁止。
+- `implementation` 必须有明确的实施授权，并且只修改任务允许的路径。
+- 保留用户已有的 staged、unstaged 和 untracked 变更，不覆盖无关内容。
+- 变更前后都使用满足风险的验证；没有实际验证的结果必须明确标注为未验证。
+- 预期产生仓库文件差异的 implementation 必须创建或更新同任务 history；没有文件差异时不创建空 history。
 
-## 首次写入前
+## 写入前检查
 
-记录：
+第一次写入前，用以下五个问题确认范围：
 
-1. 初始 `HEAD`；
-2. staged、unstaged、untracked 和冲突路径；
-3. 任务允许路径和 Agent-owned paths；
-4. 预期 history，以及必要时的 execution plan；
-5. 禁止的 Git、外部服务和破坏性动作。
+1. 用户是否明确授权本次类型的写入？
+2. 目标结果和允许修改的路径是否明确？
+3. 初始 Git 状态是否允许安全区分 Agent 变更与用户变更？
+4. 是否已确定必要的 history，以及多步骤或高风险工作所需的 active plan？
+5. 完成后要运行哪些检查，哪些检查无法运行？
 
-如果既有变更与任务重叠，检查分层 diff 并保留其内容。不能仅凭路径名推断归属。
+这些问题由 Agent 根据有效授权和真实状态判断，不是要求用户逐项确认的清单。
+满足条件后执行相应写入；缺少条件时暂停依赖它的操作，并继续独立且已授权的工作。
 
-## Protected 状态
+## 执行流程
 
-当范围无法分离、缺少必要授权、破坏性影响不明确，或仓库状态使安全交付前提失效时，将受影响操作设为 protected。报告具体受阻动作与证据；仍可继续只读检查或其他独立且已授权的工作。
+1. 根据完整请求确定任务模式、交付授权和安全状态。
+2. 在第一次写入前记录 Git 快照、任务范围和 Agent-owned paths，并完成写入前检查。
+3. 只实施获准路径，按 `build-and-test.md` 完成审查、测试、范围内修复与增量复核；
+   文件有差异时同步更新 history。审查结论不是扩大路径或外部写入授权的来源。
+4. 验证通过后交给 Git 工作流处理交付；不把执行授权扩大为 push、pull、rebase 或 merge。
 
-不得使用破坏性命令、覆盖用户工作，或扩大路径来绕过阻塞。
+## 必须暂停的情况
 
-## 变更后
+保护状态作用于具体操作：
 
-- 检查最终分层 diff 和 untracked 文件。
-- 确认只有允许路径发生变化。
-- 创建或更新同任务 history。
-- 运行必要的静态检查、构建和测试。
-- 准确报告失败、环境阻塞和未验证范围。
-- 除非 stage 或 commit 已获明确授权，否则保持 index 不变。
+- 初始索引非空时保留暂存边界，跳过自动提交；可继续无重叠路径的实施。用户明确
+  授权的 staged 交付由 `git-workflow.md` 处理，不受“初始索引必须为空”限制。
+- 路径与用户变更重叠时先判断能否安全分离；不能分离时暂停相关写入，不覆盖用户内容。
+  未解决的索引冲突阻止提交，冲突修复本身须在任务授权范围内。
+- 必要验证失败时暂停交付；继续本任务范围内的诊断、修复和复验，不能跳过失败。
+  环境阻塞与产品失败分别报告，不把未经验证的结果写为通过。
+- 缺少 history 时在允许范围内补齐。用户明确排除该路径时不扩权，完成允许的工作并
+  报告无法满足自动交付条件；记录要求不是自行扩大用户范围的理由。
+- 关键授权、目标或必要选择仍缺失时，暂停依赖它的动作并说明缺口。只有需要新增授权、
+  产品决策或无法安全保全用户工作时才等待用户，其他可修复问题由 Agent 继续处理。
+
+`protected` 不撤销已有授权，也不把 planning 提升为 implementation。报告受阻操作、
+证据和可继续的工作，避免将局部失败扩大为整个任务冻结。
+
+## 规则归属
+
+- 请求来源、否定条件和任务模式由 [`request-boundary.md`](request-boundary.md) 负责。
+- Git 快照、精确暂存、自动本地提交和禁止的远程操作由 [`git-workflow.md`](git-workflow.md) 负责。
+- active plan、completed plan 和 history 的生命周期由 [`README.md`](README.md) 负责。

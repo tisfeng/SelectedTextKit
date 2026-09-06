@@ -107,29 +107,29 @@ class PreparePRBranchTests(unittest.TestCase):
     def _create_fixture(self) -> None:
         run(["git", "init", "--bare", str(self.base_remote)], cwd=self.root)
         run(["git", "init", "--bare", str(self.fork_remote)], cwd=self.root)
-        run(["git", "init", "-b", "main", str(self.seed)], cwd=self.root)
+        run(["git", "init", "-b", "dev", str(self.seed)], cwd=self.root)
 
         self._git_config(self.seed, "user.name", "review-pr test")
         self._git_config(self.seed, "user.email", "review-pr@example.com")
         (self.seed / "shared.txt").write_text("base\n", encoding="utf-8")
         self._commit(self.seed, "chore: seed review fixture")
         run(["git", "remote", "add", "origin", str(self.base_remote)], cwd=self.seed)
-        run(["git", "push", "origin", "main"], cwd=self.seed)
+        run(["git", "push", "origin", "dev"], cwd=self.seed)
 
         run(
-            ["git", "clone", "--branch", "main", str(self.base_remote), str(self.head_source)],
+            ["git", "clone", "--branch", "dev", str(self.base_remote), str(self.head_source)],
             cwd=self.root,
         )
         self._git_config(self.head_source, "user.name", "review-pr test")
         self._git_config(self.head_source, "user.email", "review-pr@example.com")
         run(["git", "remote", "set-url", "origin", str(self.fork_remote)], cwd=self.head_source)
-        run(["git", "switch", "--create", "fix/pasteboard-guard"], cwd=self.head_source)
+        run(["git", "switch", "--create", "feat/wordbook"], cwd=self.head_source)
         if self.conflict:
             (self.head_source / "shared.txt").write_text("head\n", encoding="utf-8")
         else:
             (self.head_source / "feature.txt").write_text("feature\n", encoding="utf-8")
-        self._commit(self.head_source, "fix(pasteboard): add ownership guard")
-        run(["git", "push", "origin", "fix/pasteboard-guard"], cwd=self.head_source)
+        self._commit(self.head_source, "feat(wordbook): add local wordbook")
+        run(["git", "push", "origin", "feat/wordbook"], cwd=self.head_source)
         self.head_sha = run(
             ["git", "rev-parse", "HEAD"], cwd=self.head_source
         ).stdout.strip()
@@ -139,11 +139,11 @@ class PreparePRBranchTests(unittest.TestCase):
         else:
             (self.seed / "base-after.txt").write_text("base-after\n", encoding="utf-8")
         self._commit(self.seed, "chore: advance base branch")
-        run(["git", "push", "origin", "main"], cwd=self.seed)
+        run(["git", "push", "origin", "dev"], cwd=self.seed)
         self.base_sha = run(["git", "rev-parse", "HEAD"], cwd=self.seed).stdout.strip()
 
         run(
-            ["git", "clone", "--branch", "main", str(self.base_remote), str(self.checkout)],
+            ["git", "clone", "--branch", "dev", str(self.base_remote), str(self.checkout)],
             cwd=self.root,
         )
         self._git_config(self.checkout, "user.name", "review-pr test")
@@ -155,19 +155,19 @@ class PreparePRBranchTests(unittest.TestCase):
                 "remote",
                 "set-url",
                 "origin",
-                "https://github.com/tisfeng/SelectedTextKit.git",
+                "https://github.com/tisfeng/Easydict.git",
             ],
             cwd=self.checkout,
         )
         self._git_config(
             self.checkout,
             "url." + str(self.base_remote) + ".insteadOf",
-            "https://github.com/tisfeng/SelectedTextKit.git",
+            "https://github.com/tisfeng/Easydict.git",
         )
         self._git_config(
             self.checkout,
             "url." + str(self.fork_remote) + ".insteadOf",
-            "https://github.com/contributor/SelectedTextKit.git",
+            "https://github.com/contributor/Easydict.git",
         )
 
     def _git_config(self, repository: Path, key: str, value: str) -> None:
@@ -179,12 +179,12 @@ class PreparePRBranchTests(unittest.TestCase):
         environment.update(
             {
                 "GH_HEAD_OWNER": "contributor",
-                "GH_HEAD_REPO": "SelectedTextKit",
-                "GH_HEAD_BRANCH": "fix/pasteboard-guard",
+                "GH_HEAD_REPO": "Easydict",
+                "GH_HEAD_BRANCH": "feat/wordbook",
                 "GH_HEAD_OID": self.head_sha,
-                "GH_BASE_BRANCH": "main",
-                "GH_PR_NUMBER": "12",
-                "GH_PR_URL": "https://github.com/tisfeng/SelectedTextKit/pull/12",
+                "GH_BASE_BRANCH": "dev",
+                "GH_PR_NUMBER": "1246",
+                "GH_PR_URL": "https://github.com/tisfeng/Easydict/pull/1246",
                 "GIT_TERMINAL_PROMPT": "0",
             }
         )
@@ -192,7 +192,7 @@ class PreparePRBranchTests(unittest.TestCase):
 
     def _prepare(self, *arguments: str) -> subprocess.CompletedProcess[str]:
         return run(
-            ["bash", str(SCRIPT_PATH), *arguments, "12"],
+            ["bash", str(SCRIPT_PATH), *arguments, "1246"],
             cwd=self.checkout,
             env=self._environment(),
             check=False,
@@ -205,12 +205,12 @@ class PreparePRBranchTests(unittest.TestCase):
         result = self._prepare()
 
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertIn("Branch: fix/pasteboard-guard", result.stdout)
-        self.assertEqual(self._git("branch", "--show-current").stdout.strip(), "fix/pasteboard-guard")
+        self.assertIn("Branch: feat/wordbook", result.stdout)
+        self.assertEqual(self._git("branch", "--show-current").stdout.strip(), "feat/wordbook")
         self.assertEqual(self._git("rev-parse", "HEAD").stdout.strip(), self.head_sha)
         self.assertEqual(
-            self._git("for-each-ref", "--format=%(upstream:short)", "refs/heads/fix/pasteboard-guard").stdout.strip(),
-            "contributor/fix/pasteboard-guard",
+            self._git("for-each-ref", "--format=%(upstream:short)", "refs/heads/feat/wordbook").stdout.strip(),
+            "contributor/feat/wordbook",
         )
         self._assert_clean_status()
 
@@ -218,8 +218,8 @@ class PreparePRBranchTests(unittest.TestCase):
         result = self._prepare("--merge-latest")
 
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertIn("Review branch: fix/pasteboard-guard", result.stdout)
-        self.assertNotIn("review/pr-12-merge-", result.stdout)
+        self.assertIn("Review branch: feat/wordbook", result.stdout)
+        self.assertNotIn("review/pr-1246-merge-", result.stdout)
         merged_head = self._git("rev-parse", "HEAD").stdout.strip()
         self.assertNotEqual(merged_head, self.head_sha)
         self.assertTrue(
@@ -231,19 +231,19 @@ class PreparePRBranchTests(unittest.TestCase):
         self._assert_clean_status()
 
     def test_local_latest_base_uses_head_fallback_without_merge_suffix(self) -> None:
-        self._git("branch", "fix/pasteboard-guard")
-        self._git("branch", "--set-upstream-to=origin/main", "fix/pasteboard-guard")
+        self._git("branch", "feat/wordbook")
+        self._git("branch", "--set-upstream-to=origin/dev", "feat/wordbook")
 
         result = self._prepare("--merge-latest")
 
-        expected_branch = "review/pr-12-" + self.head_sha[:10]
+        expected_branch = "review/pr-1246-" + self.head_sha[:10]
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn(f"Review branch: {expected_branch}", result.stdout)
-        self.assertNotIn("review/pr-12-merge-", result.stdout)
+        self.assertNotIn("review/pr-1246-merge-", result.stdout)
         self.assertEqual(self._git("branch", "--show-current").stdout.strip(), expected_branch)
         self.assertNotEqual(self._git("rev-parse", "HEAD").stdout.strip(), self.head_sha)
         self.assertEqual(
-            self._git("rev-parse", "refs/heads/fix/pasteboard-guard").stdout.strip(),
+            self._git("rev-parse", "refs/heads/feat/wordbook").stdout.strip(),
             self.base_sha,
         )
         self._assert_clean_status()
@@ -253,8 +253,8 @@ class PreparePRBranchTests(unittest.TestCase):
 
         self.assertEqual(result.returncode, 2)
         self.assertIn("Merge stopped with conflicts", result.stderr)
-        self.assertIn("Review branch: fix/pasteboard-guard", result.stderr)
-        self.assertEqual(self._git("branch", "--show-current").stdout.strip(), "fix/pasteboard-guard")
+        self.assertIn("Review branch: feat/wordbook", result.stderr)
+        self.assertEqual(self._git("branch", "--show-current").stdout.strip(), "feat/wordbook")
         self.assertIn("UU shared.txt", self._git("status", "--short").stdout)
 
     def test_worktree_latest_base_keeps_source_checkout_unchanged(self) -> None:
@@ -270,7 +270,7 @@ class PreparePRBranchTests(unittest.TestCase):
         worktree_path = Path(match.group(1))
         self.worktree_paths.append(worktree_path)
         self.assertTrue(worktree_path.is_dir())
-        self.assertIn("review/pr-12-merge-", result.stdout)
+        self.assertIn("review/pr-1246-merge-", result.stdout)
         self.assertEqual(self._git("branch", "--show-current").stdout.strip(), source_branch)
         self.assertEqual(self._git("rev-parse", "HEAD").stdout.strip(), source_head)
         self._assert_clean_status()
@@ -279,7 +279,7 @@ class PreparePRBranchTests(unittest.TestCase):
             ["git", "-C", str(worktree_path), "branch", "--show-current"],
             cwd=self.checkout,
         ).stdout.strip()
-        self.assertTrue(worktree_branch.startswith("review/pr-12-merge-"))
+        self.assertTrue(worktree_branch.startswith("review/pr-1246-merge-"))
 
     def test_script_has_no_push_command(self) -> None:
         self.assertNotRegex(SCRIPT_PATH.read_text(encoding="utf-8"), r"\bgit\s+push\b")
@@ -287,5 +287,3 @@ class PreparePRBranchTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-
-

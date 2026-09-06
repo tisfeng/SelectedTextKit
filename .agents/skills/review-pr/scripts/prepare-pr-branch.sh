@@ -630,4 +630,3 @@ if [[ $checkout_mode == "worktree" ]]; then
 else
   prepare_pr_branch
 fi
-

@@ -1,23 +1,38 @@
-# Swift 与 Xcode 代码简化
+# Swift/Xcode 专项规则
 
-仅在处理 Swift、SwiftUI、AppKit 或 Xcode 变更时加载本 reference。项目规则和现有代码模式优先。
+仅在目标代码包含 Swift、SwiftUI 或 Xcode 项目时加载本 reference。这里的规则适用于一般 Swift 项目；项目自己的 `AGENTS.md`、构建配置和代码模式优先。
 
-## Swift
+## Swift 代码
 
-- 遵守声明的 Swift 版本、部署目标、availability 和模块边界。
-- 优先使用明确的值语义、访问控制、描述性名称、`guard`、`switch` 和 early return。
-- 保留 public API、Objective-C 暴露、typed errors、actor isolation、`Sendable`、取消语义和结果顺序。
-- 不要仅为减少文件或行数而合并 protocols、helpers 或函数。
-- 避免增加 type erasure、`Any`、force cast 或共享可变状态。
+- 遵循仓库声明的 Swift 版本、部署目标和 API 可用性，不假设固定系统版本。
+- 优先使用清晰的值语义、明确的访问控制和描述准确的类型与成员命名。
+- 使用 `guard`、`switch` 和早返回表达前置条件与分支；避免嵌套三元运算符、隐式副作用和过度压缩的表达式。
+- 保留有意义的协议、类型和辅助方法边界，不为了减少文件或函数数量而强行合并职责。
+- 谨慎使用类型擦除、`Any` 和 `AnyView`；只有在类型系统或架构确实需要时才引入。
+- 不改变公开 API、`Codable` 数据结构、属性包装器语义、错误类型或调用方可观察到的行为。
 
-## SwiftUI 与 AppKit
+## SwiftUI
 
-- 保留 view identity、state ownership、data flow、生命周期和平台集成。
-- 将副作用放在正确的生命周期边界。
-- 检查 task cancellation、重复触发、前台应用状态和 teardown 行为。
+- 保持视图身份、状态所有权、数据流和生命周期语义不变。
+- 只在能明显改善职责边界或复用性时拆分视图；不要为了减少行数机械提取视图。
+- 将副作用放在合适的生命周期边界，并检查任务取消、重复触发和视图销毁后的行为。
+- 遵循项目已有的预览、环境依赖、导航和本地化模式，不引入新的状态管理方式来替代局部重构。
 
-## 验证
+## 并发与异步代码
 
-- 保留 target membership、compiler conditions、resources 和 availability。
-- 使用仓库现有构建与测试命令，不创建不存在的 scheme、formatter 或 test target。
-- 即使只提供只读简化建议，也要检查相关调用方和测试。
+- 优先使用结构化并发、明确的任务生命周期和可取消操作。
+- 保持 actor 隔离、`MainActor`、`Sendable` 和线程安全约束；不要通过删除隔离标注或强制转换来绕过编译器检查。
+- UI 状态更新保持在正确的主 actor 上；避免无理由使用 detached task 或隐藏共享可变状态。
+- 重构异步流程时验证错误传播、取消传播、任务重复启动和结果顺序。
+
+## Xcode 与验证
+
+- 尊重现有 target membership、模块边界、编译条件、资源归属和 API availability。
+- 不凭空创建 scheme、构建参数或测试命令；优先使用仓库规则和项目已有脚本。
+- 只在当前任务或仓库规则要求时运行构建和测试；若未运行，明确记录未验证的部分。
+- 对只读简化建议，至少检查相关调用方、测试、编译条件和用户可见行为是否仍然一致。
+
+## 文档与文本
+
+- 遵循项目既有的文档注释、本地化和格式化约定，不将某个项目的具体库或键名当作通用 Swift 规则。
+- 注释应解释意图、生命周期、并发约束或兼容性原因，而不是重复代码本身。
