@@ -52,14 +52,58 @@ public final class AXManager: NSObject {
     private static func selectedText(inProcess processID: pid_t) throws -> String {
         let application = UIElement(AXUIElementCreateApplication(processID))
 
-        // AXSwift returns nil for missing or unsupported attributes, so convert
-        // those results to the error expected by existing callers.
-        guard let focusedUIElement = try application.focusedUIElement(),
-              let selectedText = try focusedUIElement.selectedText() else {
+        guard let focusedUIElement = try application.focusedUIElement() else {
+            throw AXError.noValue
+        }
+        let selectedText: String?
+        do {
+            selectedText = try focusedUIElement.selectedText()
+        } catch {
+            if let textMarkerSelectedText = selectedTextByTextMarkerRange(from: focusedUIElement) {
+                return textMarkerSelectedText
+            }
+            throw error
+        }
+
+        if let selectedText, !selectedText.isEmpty {
+            return selectedText
+        }
+
+        if let textMarkerSelectedText = selectedTextByTextMarkerRange(from: focusedUIElement) {
+            return textMarkerSelectedText
+        }
+
+        guard let selectedText else {
             throw AXError.noValue
         }
 
         return selectedText
+    }
+
+    /// Retrieves selected web text through the Accessibility Text Marker APIs.
+    private static func selectedTextByTextMarkerRange(from element: UIElement) -> String? {
+        var textMarkerRange: CFTypeRef?
+        let markerRangeError = AXUIElementCopyAttributeValue(
+            element.element,
+            kAXSelectedTextMarkerRangeAttribute as CFString,
+            &textMarkerRange
+        )
+        guard markerRangeError == .success, let textMarkerRange else {
+            return nil
+        }
+
+        var selectedText: CFTypeRef?
+        let selectedTextError = AXUIElementCopyParameterizedAttributeValue(
+            element.element,
+            kAXStringForTextMarkerRangeParameterizedAttribute as CFString,
+            textMarkerRange,
+            &selectedText
+        )
+        guard selectedTextError == .success else {
+            return nil
+        }
+
+        return selectedText as? String
     }
 }
 
