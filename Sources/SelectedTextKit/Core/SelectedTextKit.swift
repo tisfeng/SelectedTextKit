@@ -15,7 +15,7 @@ import Foundation
 /// Namespace for informational SelectedTextKit values.
 public enum STKInfo {
     /// Current SelectedTextKit version.
-    public static let version = "2.0.0"
+    public static let version = "2.6.7"
 
     /// Library name.
     public static let name = "SelectedTextKit"

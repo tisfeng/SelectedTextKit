@@ -16,6 +16,10 @@ public final class AXManager: NSObject {
     @objc
     public static let shared = AXManager()
 
+    /// Text Marker attribute names remain string-based for older SDK source compatibility.
+    private static let selectedTextMarkerRangeAttribute = "AXSelectedTextMarkerRange" as CFString
+    private static let stringForTextMarkerRangeAttribute = "AXStringForTextMarkerRange" as CFString
+
     /// Retrieves the currently selected text using Accessibility (AX).
     ///
     /// - Returns: The selected text as a `String`, or `nil` if no text is selected.
@@ -55,29 +59,34 @@ public final class AXManager: NSObject {
         guard let focusedUIElement = try application.focusedUIElement() else {
             throw AXError.noValue
         }
-        let selectedText: String?
-        do {
-            selectedText = try focusedUIElement.selectedText()
-        } catch {
-            if let textMarkerSelectedText = selectedTextByTextMarkerRange(from: focusedUIElement) {
+        return try resolvedSelectedText(
+            from: Result { try focusedUIElement.selectedText() },
+            textMarkerText: { selectedTextByTextMarkerRange(from: focusedUIElement) }
+        )
+    }
+
+    /// Resolves native and Text Marker results without changing the original error semantics.
+    static func resolvedSelectedText(
+        from nativeResult: Result<String?, Error>,
+        textMarkerText: () -> String?
+    ) throws -> String {
+        switch nativeResult {
+        case let .success(selectedText) where selectedText?.isEmpty == false:
+            return selectedText!
+        case let .success(selectedText):
+            if let textMarkerSelectedText = textMarkerText() {
+                return textMarkerSelectedText
+            }
+            guard let selectedText else {
+                throw AXError.noValue
+            }
+            return selectedText
+        case let .failure(error):
+            if let textMarkerSelectedText = textMarkerText() {
                 return textMarkerSelectedText
             }
             throw error
         }
-
-        if let selectedText, !selectedText.isEmpty {
-            return selectedText
-        }
-
-        if let textMarkerSelectedText = selectedTextByTextMarkerRange(from: focusedUIElement) {
-            return textMarkerSelectedText
-        }
-
-        guard let selectedText else {
-            throw AXError.noValue
-        }
-
-        return selectedText
     }
 
     /// Retrieves selected web text through the Accessibility Text Marker APIs.
@@ -85,7 +94,7 @@ public final class AXManager: NSObject {
         var textMarkerRange: CFTypeRef?
         let markerRangeError = AXUIElementCopyAttributeValue(
             element.element,
-            kAXSelectedTextMarkerRangeAttribute as CFString,
+            selectedTextMarkerRangeAttribute,
             &textMarkerRange
         )
         guard markerRangeError == .success, let textMarkerRange else {
@@ -95,7 +104,7 @@ public final class AXManager: NSObject {
         var selectedText: CFTypeRef?
         let selectedTextError = AXUIElementCopyParameterizedAttributeValue(
             element.element,
-            kAXStringForTextMarkerRangeParameterizedAttribute as CFString,
+            stringForTextMarkerRangeAttribute,
             textMarkerRange,
             &selectedText
         )
