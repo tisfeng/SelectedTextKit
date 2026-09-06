@@ -1,0 +1,4 @@
+interface:
+  display_name: "提交 Pull Request"
+  short_description: "安全规划、push 并创建 GitHub Pull Request"
+  default_prompt: "使用 $submit-pr 根据当前已提交的 checkout 准备并创建 Pull Request。"
