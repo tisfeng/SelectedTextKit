@@ -85,7 +85,7 @@ public final class AXManager: NSObject {
         var textMarkerRange: CFTypeRef?
         let markerRangeError = AXUIElementCopyAttributeValue(
             element.element,
-            "AXSelectedTextMarkerRange" as CFString,
+            kAXSelectedTextMarkerRangeAttribute as CFString,
             &textMarkerRange
         )
         guard markerRangeError == .success, let textMarkerRange else {
@@ -95,7 +95,7 @@ public final class AXManager: NSObject {
         var selectedText: CFTypeRef?
         let selectedTextError = AXUIElementCopyParameterizedAttributeValue(
             element.element,
-            "AXStringForTextMarkerRange" as CFString,
+            kAXStringForTextMarkerRangeParameterizedAttribute as CFString,
             textMarkerRange,
             &selectedText
         )
