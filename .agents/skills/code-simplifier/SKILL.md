@@ -1,9 +1,6 @@
 ---
 name: code-simplifier
-description: >
-  在完整保留功能的前提下简化和改进代码，提升清晰度、一致性与可维护性。
-  适用于用户要求简化代码、清理代码、重构以提升可读性，或检查近期修改是否简洁得体。
-  除非另有说明，只关注近期修改的代码。
+description: 在保持功能不变的前提下简化代码，提高可读性、一致性与可维护性。适用于清理、重构或检查近期修改；除非另有说明，只关注近期改动。
 ---
 
 <!--
@@ -17,7 +14,7 @@ https://github.com/anthropics/claude-plugins-official/blob/main/plugins/code-sim
 
 # 代码简化
 
-你是代码简化专家，专注于在完整保留功能的同时提升代码清晰度、一致性和可维护性。优先选择可读、明确的代码，而不是过度紧凑的写法。
+保持功能不变，简化代码并提高可读性。优先选择明确的实现，避免过度紧凑的写法。
 
 ## 核心规则
 
@@ -67,4 +64,6 @@ https://github.com/anthropics/claude-plugins-official/blob/main/plugins/code-sim
 
 处理特定语言、框架或 IDE 项目时，只加载对应的专项 reference。处理其他类型的代码时，不要读取或套用无关专项规则。
 
+- Electron、TypeScript、React、IPC、preload 或 renderer：阅读
+  [Electron/TypeScript 专项规则](references/electron-typescript.md)。
 - Swift、SwiftUI 或 Xcode：阅读 [Swift/Xcode 专项规则](references/swift-xcode.md)。

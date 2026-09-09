@@ -1,5 +1,11 @@
 # Easydict Agent 文档移植参考
 
+> 历史记录：本文保留 2026-09-06 的迁移基线、91 文件映射和当时的本地适配，
+> 不再描述现行资产状态。2026-09-09 起采用外部版本化治理，见
+> [新迁移映射](external-agent-assets-port.md)、[通用资产来源](tisfeng-skills.md) 和
+> [独立图表技能来源](fireworks-tech-graph.md)。旧 overlay 与 submit-pr 本地测试补丁
+> 已由新方案替代；历史中的旧路径仅用于还原当时状态。
+
 ## 来源与决定
 
 - 源仓库：Easydict。

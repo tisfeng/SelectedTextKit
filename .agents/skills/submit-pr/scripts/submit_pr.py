@@ -15,6 +15,8 @@ import tempfile
 from typing import Any, Sequence
 
 
+# Default headings are used only when a repository template does not provide a
+# semantic destination for the required PR content.
 CANONICAL_HEADINGS = (
     "## 变更说明 / Summary",
     "## 关联 Issue / Linked Issues",
@@ -56,16 +58,8 @@ TITLE_PATTERN = re.compile(
 BRANCH_PATTERN = re.compile(
     rf"^(?:{CONVENTIONAL_TYPES})/[a-z0-9]+(?:-[a-z0-9]+)*$"
 )
-TEMPLATE_CANDIDATES = (
-    ".github/pull_request_template.md",
-    ".github/PULL_REQUEST_TEMPLATE.md",
-    "docs/pull_request_template.md",
-)
-TEMPLATE_DIRECTORIES = (
-    ".github/PULL_REQUEST_TEMPLATE",
-    "docs/PULL_REQUEST_TEMPLATE",
-    "PULL_REQUEST_TEMPLATE",
-)
+TEMPLATE_PARENT_DIRECTORIES = ("", "docs", ".github")
+TEMPLATE_EXTENSIONS = {".md", ".txt"}
 
 
 class SubmitPRError(RuntimeError):
@@ -400,40 +394,35 @@ def parse_template(template_text: str) -> tuple[list[str], list[tuple[str, str]]
 def render_pr_body(template_text: str, content: PRContent) -> str:
     validate_content(content)
     preamble, template_sections = parse_template(template_text)
-    preserved = ["" for _ in CANONICAL_HEADINGS]
-    extras: list[str] = []
     seen: set[int] = set()
-    for heading, body in template_sections:
-        index = section_index(heading)
-        cleaned = clean_template_body(body)
-        if index is None:
-            extras.append(f"{heading}\n\n{cleaned}".rstrip())
-            continue
-        if index in seen:
-            raise SubmitPRError(f"PR template repeats semantic section: {heading}")
-        seen.add(index)
-        preserved[index] = cleaned
-
-    issue_lines = "\n".join(f"- {issue.strip()}" for issue in content.issues)
-    generated = [
+    generated = (
         content.summary.strip(),
-        issue_lines,
+        "\n".join(f"- {issue.strip()}" for issue in content.issues),
         content.verification.strip(),
         UI_SCREENSHOT_NOTICE if content.ui_change else "N/A",
-    ]
+    )
     rendered: list[str] = []
     preamble_text = clean_template_body("\n".join(preamble))
     if preamble_text:
         rendered.append(preamble_text)
-    for heading, value, template_body in zip(
-        CANONICAL_HEADINGS,
-        generated,
-        preserved,
-        strict=True,
-    ):
-        body_parts = [part for part in (value, template_body) if part]
+    for heading, body in template_sections:
+        index = section_index(heading)
+        cleaned = clean_template_body(body)
+        if index is None:
+            rendered.append(f"{heading}\n\n{cleaned}".rstrip())
+            continue
+        if index in seen:
+            raise SubmitPRError(f"PR template repeats semantic section: {heading}")
+        seen.add(index)
+        body_parts = [part for part in (generated[index], cleaned) if part]
         rendered.append(f"{heading}\n\n" + "\n\n".join(body_parts))
-    rendered.extend(extras)
+
+    for index, (heading, value) in enumerate(
+        zip(CANONICAL_HEADINGS, generated, strict=True)
+    ):
+        if index not in seen:
+            rendered.append(f"{heading}\n\n{value}")
+
     if content.extra_body.strip():
         for line in content.extra_body.splitlines():
             if line.startswith("## ") and section_index(line) is not None:
@@ -453,11 +442,32 @@ def discover_template(repo_root: Path, requested: str | None) -> tuple[str, str 
             return path.read_text(encoding="utf-8"), str(path)
         except OSError as error:
             raise SubmitPRError(f"cannot read PR template: {path}") from error
-    candidates = [repo_root / relative for relative in TEMPLATE_CANDIDATES]
-    for directory in TEMPLATE_DIRECTORIES:
-        path = repo_root / directory
-        if path.is_dir():
-            candidates.extend(sorted(path.glob("*.md")))
+    candidates: list[Path] = []
+    for relative in TEMPLATE_PARENT_DIRECTORIES:
+        parent = repo_root / relative
+        if not parent.is_dir():
+            continue
+        for path in sorted(parent.iterdir(), key=lambda item: item.name.casefold()):
+            name = path.stem.casefold()
+            extension = path.suffix.casefold()
+            if (
+                path.is_file()
+                and name == "pull_request_template"
+                and extension in TEMPLATE_EXTENSIONS
+            ):
+                candidates.append(path)
+            elif path.is_dir() and path.name.casefold() == "pull_request_template":
+                candidates.extend(
+                    sorted(
+                        (
+                            child
+                            for child in path.iterdir()
+                            if child.is_file()
+                            and child.suffix.casefold() in TEMPLATE_EXTENSIONS
+                        ),
+                        key=lambda item: item.name.casefold(),
+                    )
+                )
     existing: list[Path] = []
     seen_files: set[tuple[int, int]] = set()
     for path in candidates:

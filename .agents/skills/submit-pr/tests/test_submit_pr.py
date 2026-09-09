@@ -12,21 +12,7 @@ import unittest
 
 
 SKILL_ROOT = Path(__file__).resolve().parents[1]
-REPOSITORY_ROOT = SKILL_ROOT.parents[2]
 SCRIPT_PATH = SKILL_ROOT / "scripts" / "submit_pr.py"
-LOCAL_TEMPLATE = textwrap.dedent(
-    """\
-    ## Summary
-
-    ## Linked Issues
-
-    ## Verification
-
-    - [ ] I ran the focused test suite.
-
-    ## Screenshots
-    """
-)
 SPEC = importlib.util.spec_from_file_location("submit_pr", SCRIPT_PATH)
 assert SPEC is not None and SPEC.loader is not None
 submit_pr = importlib.util.module_from_spec(SPEC)
@@ -68,19 +54,30 @@ class RenderTests(unittest.TestCase):
         values.update(overrides)
         return submit_pr.PRContent(**values)
 
-    def test_local_template_still_renders_canonical_sections(self) -> None:
+    def test_template_fixture_preserves_matching_headings(self) -> None:
+        template = textwrap.dedent(
+            """\
+            ## Summary
+
+            ## Linked Issues
+
+            ## Verification
+
+            ## Screenshots
+            """
+        )
         body = submit_pr.render_pr_body(
-            LOCAL_TEMPLATE,
+            template,
             self.content(),
         )
 
-        for heading in submit_pr.CANONICAL_HEADINGS:
+        for heading in ("## Summary", "## Linked Issues", "## Verification", "## Screenshots"):
             self.assertEqual(body.count(heading), 1)
         self.assertIn("- #123", body)
-        self.assertIn("## 截图 / Screenshots\n\nN/A", body)
+        self.assertIn("## Screenshots\n\nN/A", body)
         self.assertNotIn("<!--", body)
 
-    def test_english_template_is_canonicalized_and_preserves_requirements(self) -> None:
+    def test_template_headings_and_requirements_are_preserved(self) -> None:
         template = textwrap.dedent(
             """\
             <!-- repository guidance -->
@@ -102,11 +99,31 @@ class RenderTests(unittest.TestCase):
 
         body = submit_pr.render_pr_body(template, self.content())
 
-        for heading in submit_pr.CANONICAL_HEADINGS:
-            self.assertEqual(body.count(heading), 1)
+        self.assertEqual(
+            [line for line in body.splitlines() if line.startswith("## ")],
+            [
+                "## Summary",
+                "## Related Issues",
+                "## Testing",
+                "## Screenshots",
+                "## Maintainer Checklist",
+            ],
+        )
         self.assertIn("- [ ] I ran the focused test suite.", body)
         self.assertIn("## Maintainer Checklist", body)
         self.assertIn("- [ ] Documentation is updated.", body)
+
+    def test_template_only_gets_default_sections_when_semantic_sections_are_missing(self) -> None:
+        body = submit_pr.render_pr_body(
+            "## Summary\n\nRepository context\n\n## Maintainer Checklist\n\n- [ ] Reviewed",
+            self.content(),
+        )
+
+        self.assertEqual(body.count("## Summary"), 1)
+        self.assertIn("## 关联 Issue / Linked Issues", body)
+        self.assertIn("## 验证 / Verification", body)
+        self.assertIn("## 截图 / Screenshots", body)
+        self.assertIn("## Maintainer Checklist", body)
 
     def test_missing_template_sections_use_fixed_four_section_contract(self) -> None:
         body = submit_pr.render_pr_body("", self.content(issues=()))
@@ -118,6 +135,52 @@ class RenderTests(unittest.TestCase):
         linked = body.split(submit_pr.CANONICAL_HEADINGS[1], 1)[1]
         linked = linked.split(submit_pr.CANONICAL_HEADINGS[2], 1)[0]
         self.assertEqual(linked.strip(), "")
+
+    def test_missing_template_discovery_returns_builtin_contract(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            template, path = submit_pr.discover_template(Path(directory), None)
+
+        self.assertIsNone(path)
+        self.assertEqual(
+            [line for line in template.splitlines() if line.startswith("## ")],
+            list(submit_pr.CANONICAL_HEADINGS),
+        )
+
+    def test_supported_single_template_locations_are_discovered(self) -> None:
+        locations = (
+            "pull_request_template.md",
+            "PULL_REQUEST_TEMPLATE.md",
+            "Pull_Request_Template.TXT",
+            "docs/pUlL_rEqUeSt_TeMpLaTe.TxT",
+            ".github/PULL_REQUEST_TEMPLATE.md",
+            ".github/pull_request_template/feature.TXT",
+        )
+        for location in locations:
+            with self.subTest(location=location):
+                with tempfile.TemporaryDirectory() as directory:
+                    root = Path(directory)
+                    expected = root / location
+                    expected.parent.mkdir(parents=True, exist_ok=True)
+                    expected.write_text("## Summary\n", encoding="utf-8")
+
+                    template, path = submit_pr.discover_template(root, None)
+
+                self.assertEqual(template, "## Summary\n")
+                self.assertEqual(path, str(expected))
+
+    def test_template_discovery_deduplicates_hard_links(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = root / "pull_request_template.md"
+            duplicate = root / ".github" / "PULL_REQUEST_TEMPLATE.md"
+            duplicate.parent.mkdir()
+            source.write_text("## Summary\n", encoding="utf-8")
+            os.link(source, duplicate)
+
+            template, path = submit_pr.discover_template(root, None)
+
+        self.assertEqual(template, "## Summary\n")
+        self.assertEqual(path, str(source))
 
     def test_ui_change_requests_screenshots_without_stopping(self) -> None:
         body = submit_pr.render_pr_body("", self.content(ui_change=True))
@@ -192,27 +255,8 @@ class WorkflowIntegrationTests(unittest.TestCase):
         run(["git", "config", "user.name", "Submit PR Test"], cwd=self.repo)
         run(["git", "config", "user.email", "submit-pr@example.com"], cwd=self.repo)
 
-        (self.repo / ".github").mkdir()
-        (self.repo / ".github" / "pull_request_template.md").write_text(
-            textwrap.dedent(
-                """\
-                ## Summary
-
-                ## Linked Issues
-
-                ## Verification
-
-                ## Screenshots
-
-                ## Checklist
-
-                - [ ] Scope is focused.
-                """
-            ),
-            encoding="utf-8",
-        )
         (self.repo / "base.txt").write_text("base\n", encoding="utf-8")
-        run(["git", "add", ".github/pull_request_template.md", "base.txt"], cwd=self.repo)
+        run(["git", "add", "base.txt"], cwd=self.repo)
         run(
             [
                 "git",
@@ -419,8 +463,12 @@ class WorkflowIntegrationTests(unittest.TestCase):
         self.assertEqual(payload["base"], "main")
         self.assertEqual(payload["head_remote"], "upstream")
         self.assertEqual(payload["planned_branch_action"], "would-create")
+        self.assertIsNone(payload["template"])
         self.assertTrue(payload["needs_screenshots"])
-        self.assertIn("## Checklist", payload["body"])
+        self.assertEqual(
+            [line for line in payload["body"].splitlines() if line.startswith("## ")],
+            list(submit_pr.CANONICAL_HEADINGS),
+        )
         self.assertEqual(run(["git", "show-ref"], cwd=self.repo).stdout, refs_before)
         self.assertEqual(
             run(["git", "status", "--porcelain=v1"], cwd=self.repo).stdout,
@@ -439,6 +487,15 @@ class WorkflowIntegrationTests(unittest.TestCase):
         self.assertEqual(first["push_action"], "created")
         self.assertEqual(first["pr_action"], "created")
         self.assertFalse(first["is_cross_repository"])
+        state = json.loads(self.state_path.read_text(encoding="utf-8"))
+        self.assertEqual(
+            [
+                line
+                for line in state["pr"]["body"].splitlines()
+                if line.startswith("## ")
+            ],
+            list(submit_pr.CANONICAL_HEADINGS),
+        )
         self.assertEqual(
             run(["git", "branch", "--show-current"], cwd=self.repo).stdout.strip(),
             "main",
