@@ -1,10 +1,13 @@
 # 外部 Agent 资产迁移映射
 
+> 历史证据：本文记录 2026-09-09 的 v0.3.0 双 lock 迁移结果；当前规则与资产基线见
+> [`docs/agents/skills.md`](../agents/skills.md)，不要按本文旧路径执行同步。
+
 - 核对日期：2026-09-09。
 - 宿主规则来源：Easydict `602c56b24a68d2917f4d9e5ed5180f9f4cbdf91a`。
 - 目标初始提交：`40ffa178a5ba5f49d634d76c6a5906005ac83269`。
-- 外部资产来源分别见 [tisfeng-skills.md](tisfeng-skills.md) 与
-  [fireworks-tech-graph.md](fireworks-tech-graph.md)；双 lock 是当前安装事实。
+- 外部资产来源与当前安装事实已迁移至 [`docs/agents/skills.md`](../agents/skills.md)；本文只保留
+  2026-09-09 的历史核对证据。
 
 ## 完整资产
 

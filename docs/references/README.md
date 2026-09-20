@@ -6,7 +6,7 @@
 
 ## 当前参考
 
-- [`easydict-agent-documentation-port.md`](easydict-agent-documentation-port.md)：记录
-  Easydict 规则与技能的来源基线、逐文件对应关系及必要适配范围。
+- [`easydict-agent-documentation-port.md`](easydict-agent-documentation-port.md)：保留早期迁移证据；
+  当前 Skill 版本和运行规则以 [`docs/agents/skills.md`](../agents/skills.md) 为准。
 - [`astra-agent-guidance.md`](astra-agent-guidance.md)：记录 Astra 官方提示建议、本地
   采用范围及授权和验证场景。

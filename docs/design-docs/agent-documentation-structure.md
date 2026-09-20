@@ -10,7 +10,7 @@ Agent 需要快速找到当前任务的约束，人类需要理解这些约束�
 入口会持续膨胀；如果多份索引重复路由，同一规则又容易产生多个权威来源。
 
 本设计记录 SelectedTextKit 为什么采用当前文档结构。现行规则及目录生命周期以
-[`AGENTS.md`](../../AGENTS.md) 和 [`docs/agents/README.md`](../agents/README.md) 为准，
+[`AGENTS.md`](../../AGENTS.md)、[`docs/agents/skills.md`](../agents/skills.md) 和目录 README 为准，
 本文不复制完整操作条款。
 
 ## 目标
@@ -32,11 +32,9 @@ Agent 需要快速找到当前任务的约束，人类需要理解这些约束�
 | 位置 | 权威内容 | 主要用途 |
 | --- | --- | --- |
 | `AGENTS.md` | 通用约束和唯一任务路由 | 告诉 Agent 当前任务需要遵守及读取哪些规则 |
-| `docs/agents/request-boundary.md` | 请求与执行边界 | 规定授权、任务状态、写入前检查和子代理边界 |
-| `docs/agents/git-workflow.md` | Git 工作流 | 规定状态保护、本地交付、集成和 PR 参数 |
-| `docs/agents/build-and-test.md` | 构建与测试 | 规定验证策略、reviewer/tester 和 Xcode 检查 |
-| `docs/agents/development.md` | 开发规则 | 规定代码质量、Swift/Xcode 和本地化 |
-| `docs/agents/README.md` | 仓库治理 | 规定文档生命周期、受管资产和同步边界 |
+| `docs/agents/build-and-test.md` | 构建与测试 | 规定测试授权、验证策略和 Xcode 检查 |
+| `docs/agents/coding-guidelines.md` | 编码规范 | 规定代码质量、Swift/Xcode 和本地化 |
+| `docs/agents/skills.md` | 外部 Skill 资产 | 规定来源、版本、同步和校验边界 |
 | `docs/architecture/` | 当前实现事实 | 描述模块、调用链和运行时边界 |
 | `docs/design-docs/` | 长期设计理由 | 记录为什么选择某个重要边界或策略 |
 | `docs/exec-plans/` | 执行过程 | 记录获准工作的目标、风险、进度和验证 |
@@ -44,7 +42,7 @@ Agent 需要快速找到当前任务的约束，人类需要理解这些约束�
 | `docs/references/` | 精选外部输入 | 记录来源、采用点、本地差异和核对基线 |
 | 根目录 `README.md` | 公开文档 | 面向 Package 使用者说明能力和使用方式 |
 
-根入口只维护简明的通用约束和任务路由，不复制专题流程。五份专题规则各自维护一个权威职责；
+根入口只维护简明的通用约束和任务路由，不复制专题流程。三份专题规则各自维护一个权威职责；
 设计文档解释取舍，但链接现行权威而不复制正文。外部参考只提供证据，只有经过本地评估并
 写入权威规则后，才会成为 SelectedTextKit 的约束。
 
@@ -60,8 +58,8 @@ Agent 需要快速找到当前任务的约束，人类需要理解这些约束�
 ## SelectedTextKit 本地适配
 
 SelectedTextKit 经用户批准采用 Easydict 的完整通用规则，只适配 Swift Package、示例 Xcode
-工程、公开 README 和项目实际依赖。通用技能与子代理直接采用外部版本化完整快照，不在
-本项目内修改；治理边界见 [外部 Agent 资产设计](external-agent-assets-management.md)。
+工程、公开 README 和项目实际依赖。通用 Skills 直接采用外部版本化完整快照，不在本项目内修改；
+治理边界见 [`docs/agents/skills.md`](../agents/skills.md)。
 逐文件采用范围和必要差异见 [移植参考](../references/easydict-agent-documentation-port.md)。
 
 ## 重新评估条件
